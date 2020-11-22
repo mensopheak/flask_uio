@@ -81,6 +81,7 @@ def form():
     post_date = uio.DateField('post_date', required=True)
     publish_at = uio.DateTimeField('publish_at', required=True)
     is_private = uio.CheckBoxField('is_private')
+    submit = uio.Element('input', 'ui primary button', attrs=[('type', 'submit'), ('value', 'Submit')])
     f.append_inner(
         username,
         password,
@@ -90,9 +91,23 @@ def form():
         publish_at,
         is_private,
         post_content,
+        submit,
     )
-    segment = uio.Element('div', 'ui basic segment', inner_elements=[title, f])
-    doc.body.append(segment)
+    segment = uio.Element('div', 'ui segment', inner_elements=[title, f])
+    container = uio.Element('div', 'ui container', inner_elements=[segment])
+    doc.body.append(container)
+    if f.validate_on_submit():
+        f.flash_success()
+    
+    username.data = username.data
+    password.data = password.data
+    category.data = category.data
+    post.data = post.data
+    post_content.data = post_content.data
+    post_date.data = post_date.data
+    publish_at.data = publish_at.data
+    is_private.data = is_private.data
+    
     return Markup(doc.get_html())
 
 if __name__ == '__main__':

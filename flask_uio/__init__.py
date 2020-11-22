@@ -1,4 +1,4 @@
-__version__ = '1.0.0'
+__version__ = '0.1.0'
 
 from .prop import ValidProp, ValidSequenceProp, IntProp
 from .mixin import ReqInjectLinkMixin, ReqInjectScriptMixin
@@ -30,7 +30,6 @@ class FlaskUIO(object):
         app.config.setdefault('FLASK_UIO_FOMANTIC_STATIC_FOLDER', None)
         app.config.setdefault('FLASK_UIO_FOMANTIC_CSS_FILENAME', None)
         app.config.setdefault('FLASK_UIO_FOMANTIC_JS_FILENAME', None)
-        app.config.setdefault('FLASK_UIO_DATE_DISPLAY_FORMAT', 'None')
         app.config.setdefault('FLASK_UIO_DATE_FORMAT', '%Y-%m-%d')
         app.config.setdefault('FLASK_UIO_DATETIME_FORMAT', '%Y-%m-%d %H:%M:%S.%f')
         app.config.setdefault('FLASK_UIO_DATE_DISPLAY_FORMAT', '%d-%b-%Y')

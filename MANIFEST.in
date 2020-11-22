@@ -1,1 +1,1 @@
-recursive-include semantic_ui/static *
+recursive-include flask_uio/static *
