@@ -39,8 +39,12 @@ class FomanticBody(Body):
         self.append_script(url_for('flaskuio.static', filename='script/custom-semantic.js'))
         self.append_script(url_for('flaskuio.static', filename='script/summernote.js'))
         
-class FomanticDocument(Document):
+class Document(Document):
+    head = None
+    body = None
     def __init__(self, title):
-        self.head = FomanticHead(title)
-        self.body = FomanticBody()
+        css = current_app.config.get('FLASK_UIO_CSS_FRAMEWORK') or 'fomanticui'
+        if css == 'fomanticui':
+            self.head = FomanticHead(title)
+            self.body = FomanticBody()
         

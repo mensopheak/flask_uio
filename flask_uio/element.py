@@ -72,7 +72,7 @@ class Element(CoreElement):
             if self.is_self_closing_tag:
                 html = f'<{self.tag_name}{tag_id}{css_class}{attrs} />'
             else:
-                html = f'<{self.tag_name}{tag_id}{css_class}{attrs}>{inner_text}{inner_element_html}</{self.tag_name}>'
+                html = f'<{self.tag_name}{tag_id}{css_class}{attrs}>{inner_element_html}{inner_text}</{self.tag_name}>'
         
         return prev_element_html + html + next_element_html
         

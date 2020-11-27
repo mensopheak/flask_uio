@@ -5,11 +5,25 @@ from .mixin import ReqInjectLinkMixin, ReqInjectScriptMixin
 from .element import Element, Link, Script
 from .core import CoreElement
 from .basic import Document, Head, Body
-from .fomantic_base import FomanticDocument, FomanticHead, FomanticBody
+from .base import Document, FomanticHead, FomanticBody
 from .validator import Validator, RequiredValidator, RegexValidator, PhoneValidator, EmailValidator, StringValidator, UploadValidator, DateValidator, DateTimeValidator
 from .func import number_dict, get_word
 from .token import Token
-from .fomantic_form import Form, Field, UploadField, QueryDropDownField, TextField, TextAreaField, TextAreaSummernoteField, CheckBoxField, DateField, DateTimeField
+from .form import Form, Field, UploadField, QueryDropDownField, TextField, TextAreaField, TextAreaSummernoteField, CheckBoxField, DateField, DateTimeField
+from .icon import Icon, LinkIcon
+from .button import Button
+from .modal import MessageModal, ConfirmModal
+from .container import Container
+from .segment import Segment, Segments
+from .text import Text
+from .a import A
+from .divider import Divider
+from .table import Table
+from .table_col_item import TableColItem
+from .table_date_item import TableDateItem
+from .table_datetime_item import TableDateTimeItem
+from .table_static_link_item import TableStaticLinkItem
+from .route import Route
 
 class FlaskUIO(object):
     def __init__(self, app=None):
@@ -27,6 +41,7 @@ class FlaskUIO(object):
         from flask import Blueprint, jsonify, current_app
         from sqlalchemy.orm import scoped_session, sessionmaker
         
+        app.config.setdefault('FLASK_UIO_CSS_FRAMEWORK', 'fomanticui')
         app.config.setdefault('FLASK_UIO_FOMANTIC_STATIC_FOLDER', None)
         app.config.setdefault('FLASK_UIO_FOMANTIC_CSS_FILENAME', None)
         app.config.setdefault('FLASK_UIO_FOMANTIC_JS_FILENAME', None)
