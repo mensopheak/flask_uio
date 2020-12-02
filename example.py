@@ -1,4 +1,5 @@
 from flask import Flask, Markup
+from flask.helpers import url_for
 from flask_sqlalchemy import SQLAlchemy
 import flask_uio as uio
 
@@ -41,6 +42,202 @@ class Post(db.Model):
 # t2 = Post(title='Tech Post 2', category_id=2, content='Tech Post 2')
 # c1 = Post(title='Culture Post 1', category_id=3, content='Culture Post 1')
 # c2 = Post(title='Culture Post 2', category_id=3, content='Culture Post 2')
+
+def get_card(title):
+    inner_text = f'''
+    <div class="content">
+        <div class="header">{title}</div>
+    </div>
+    '''
+    return uio.Element('div', css_class='ui fluid card', inner_text=inner_text)
+
+@app.route('/image')
+def load_image():
+    img1 = uio.Image(url_for('static', filename='vlogo.png'), opt_css_class='centered')
+    img2 = uio.Image(url_for('static', filename='hlogo.png'), opt_css_class='centered')
+    
+    segment = uio.Segment(img1, img2, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Image')
+    doc.body.append(segment)
+    return Markup(doc.get_html())
+
+@app.route('/sidebar')
+def load_sidebar():
+    sidebar = uio.SideBar()
+    sidebar.sidebar_menu.append_inner(
+        uio.Image(url_for('static', filename='vlogo.png'), opt_css_class='small centered'),
+        uio.MenuHeaderItem('PYSONICE'),
+        uio.MenuItem('Admin', 'admin'),
+        uio.MenuItem('CRM', 'crm'),
+        uio.MenuItem('CUS', 'cus'),
+    )
+    system_dd = uio.Dropdown('System', css_class='ui dropdown item')
+    system_dd.append_inner(
+        uio.DropdownMenu(
+            uio.DropdownMenuItem('Module', url='module', icon=uio.Icon('tools icon'))
+        )
+    )
+    sidebar.nav_menu.append_inner(
+        uio.MenuHeaderItem('FlaskUIO'),
+        system_dd,
+        uio.MenuItem('Resource'),
+        uio.RightMenu(
+            uio.MenuItem('Men Sopheak', 'account', uio.Icon('user icon')),
+            uio.MenuItem('Logout', 'logout', uio.Icon('sign out alternate icon'))    
+        ),
+    )
+    doc = uio.Document('Fomantic Ui - Sidebar')
+    doc.body.append(sidebar)
+    return Markup(doc.get_html())
+
+@app.route('/menu')
+def load_menu():
+    menu1 = uio.Menu(
+        uio.MenuHeaderItem('FlaskUIO'),
+        uio.MenuItem('About Us', 'about_us'),
+        uio.MenuItem('Jobs', 'job'),
+        uio.MenuItem('Locations', 'locations'),
+        css_class='ui primary inverted large menu custom',
+    )
+    menu2 = uio.Menu(
+        uio.MenuActiveItem('Home', 'home'),
+        uio.MenuItem('Message', 'message'),
+        uio.MenuItem('Friend', 'friend'),
+        uio.RightMenu(
+            uio.MenuItem('Men Sopheak', 'account', uio.Icon('user icon')),
+            uio.MenuItem('Logout', 'logout', uio.Icon('sign out alternate icon'))    
+        ),
+        opt_css_class='secondary',
+    )
+    display_options = uio.DropdownMenu(
+        uio.DropdownMenuItem('Text Size', css_class='header'),
+        uio.DropdownMenuItem('Small', 'small'),
+        uio.DropdownMenuItem('Medium', 'medium'),
+        uio.DropdownMenuItem('Large', 'large'),
+    )
+    menu3 = uio.Menu(
+        uio.MenuActiveItem('Account', 'account'),
+        uio.MenuItem('Settings', 'setting'),
+        uio.Dropdown('Display Options', display_options, css_class='ui dropdown item'),
+        opt_css_class='vertical'
+    )
+    
+    segment = uio.Segment(menu2, menu3, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Menu')
+    doc.body.append(menu1, segment)
+    return Markup(doc.get_html())
+
+@app.route('/dropdown')
+def load_dropdown():
+    dd = uio.Dropdown('File')
+    ddi1 = uio.DropdownMenuItem('Publish To Web', icon=uio.Icon('dropdown icon'))
+    ddi1.append_inner(
+        uio.DropdownMenu(
+            uio.DropdownMenuItem('Google Docs', 'http://google.com'),
+            uio.DropdownMenuItem('Google Drive'),
+            uio.DropdownMenuItem('Dropbox'),
+        )
+    )
+    ddm = uio.DropdownMenu(
+        uio.DropdownMenuItem('New'),
+        uio.DropdownMenuItem('Open', desc='ctrl + o'),
+        uio.DropdownMenuItem('Save as...', desc='ctrl + s'),
+        uio.Divider(),
+        ddi1,
+    )
+    dd.append_inner(ddm)
+    segment = uio.Segment(dd, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Dropdown')
+    doc.body.append(segment)
+    return Markup(doc.get_html())
+
+@app.route('/card')
+def load_card():
+    card_group = uio.Cards(
+        uio.Card(
+            uio.CardImage(url_for('static', filename='python_logo.png')),
+            uio.CardContent(
+                uio.CardContentHeader('Elliot Fu'),
+                uio.CardContentMeta('Friend'),
+                uio.CardContentDesc('Elliot Fu is a film-maker from New York.'),
+            ),
+            uio.CardExtraContent(
+                uio.Button('Join Group', btn_type='button')
+            )
+        ),
+        uio.Card(
+            uio.CardImage(url_for('static', filename='js.png')),
+            uio.CardContent(
+                uio.CardContentHeader('Veronika Ossi'),
+                uio.CardContentMeta('Friend'),
+                uio.CardContentDesc('Veronika Ossi is a set designer living in New York who enjoys kittens, music, and partying.'),
+            ),
+            uio.CardExtraContent(
+                uio.Button('Join Group', btn_type='button')
+            )
+        ),
+        uio.Card(
+            uio.CardImage(url_for('static', filename='c#.png')),
+            uio.CardContent(
+                uio.CardContentHeader('Jenny Hess'),
+                uio.CardContentMeta('Friend'),
+                uio.CardContentDesc('Jenny is a student studying Media Management at the New School.'),
+            ),
+            uio.CardExtraContent(
+                uio.Button('Join Group', btn_type='button')
+            )
+        ),
+    )
+    
+    card_group2 = uio.Cards(
+        uio.Card(uio.CardImage(url_for('static', filename='python_logo.png')), url='https://www.python.org/'),
+        uio.Card(uio.CardImage(url_for('static', filename='js.png'))),
+        uio.Card(uio.CardImage(url_for('static', filename='c#.png'))),
+        uio.Card(uio.CardImage(url_for('static', filename='python_logo.png'))),
+        uio.Card(uio.CardImage(url_for('static', filename='js.png'))),
+        uio.Card(uio.CardImage(url_for('static', filename='c#.png'))),
+        nb_card=6
+    )
+    
+    segment = uio.Segment(card_group, card_group2, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Card')
+    doc.body.append(segment)
+    return Markup(doc.get_html())
+
+@app.route('/grid')
+def load_grid():
+    grid1 = uio.Grid()
+    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
+    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
+    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
+    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
+    
+    grid2 = uio.Grid()
+    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append_inner(uio.GridColumn(get_card('2 wide column'), nb_wide=2))
+    grid2.append_inner(uio.GridColumn(get_card('8 wide column'), nb_wide=8))
+    grid2.append_inner(uio.GridColumn(get_card('6 wide column'), nb_wide=6))
+    
+    grid3 = uio.Grid(nb_col=4)
+    grid3.append_inner(
+        uio.GridRow(
+            uio.GridColumn(get_card('column')),
+            uio.GridColumn(get_card('column')),
+            uio.GridColumn(get_card('column')),
+        )
+    )
+    grid3.append_inner(uio.GridColumn(get_card('column')))
+    grid3.append_inner(uio.GridColumn(get_card('column')))
+    grid3.append_inner(uio.GridColumn(get_card('column')))
+    grid3.append_inner(uio.GridColumn(get_card('column')))
+    
+    segment = uio.Segment(grid1, grid2, grid3, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Grid')
+    doc.body.append(segment)
+    return Markup(doc.get_html())
 
 @app.route('/')
 def index():
@@ -117,7 +314,7 @@ def segment():
 
 @app.route('/form', methods=["GET", "POST"])
 def form():
-    doc = uio.Document('Fomantic Ui')
+    doc = uio.Document('Fomantic Ui', summernote=True)
     title = uio.Element('div', 'ui primary header', inner_text='FlaskUIO Form')
     f = uio.Form()
     username = uio.TextField('username', required=True)
@@ -141,14 +338,16 @@ def form():
         where=f'category_id = {category.data if category.data else 0}',
         parents=[category]
     )
+    color = uio.DropDownField('color', [('Red', 'red'), ('Yellow', 'yellow'), ('Green', 'green')])
     post_date = uio.DateField('post_date', required=True)
     publish_at = uio.DateTimeField('publish_at', required=True)
     is_private = uio.CheckBoxField('is_private')
     submit = uio.Button('Submit', btn_type='button', color='blue')
-    modal = uio.ConfirmModal('Confirmation Modal', 'Are you sure to proceed this form?', calling_id=submit.id, icon=uio.Icon('delete icon'))
+    modal = uio.ConfirmModal('Confirmation Modal', 'Are you sure to proceed this form?', calling_id=submit.id, form_id=f.id, icon=uio.Icon('delete icon'))
     f.append_inner(
         username,
         password,
+        color,
         category,
         post,
         post_date,
@@ -156,8 +355,9 @@ def form():
         is_private,
         post_content,
         submit,
+        modal,
     )
-    segment = uio.Element('div', 'ui segment', inner_elements=[title, f, modal])
+    segment = uio.Element('div', 'ui segment', inner_elements=[title, f])
     container = uio.Container(segment)
     doc.body.append(container)
     if f.validate_on_submit():
@@ -165,6 +365,7 @@ def form():
     
     username.data = username.data
     password.data = password.data
+    color.data = color.data
     category.data = category.data
     post.data = post.data
     post_content.data = post_content.data

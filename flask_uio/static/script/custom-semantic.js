@@ -39,8 +39,12 @@ function load_dropdown_field(id) {
     });
 }
 
-function load_dropdown(id) {
-    $("#" + id).dropdown();
+function load_dropdown(id, option={}) {
+    if (jQuery.isEmptyObject(option)){
+        $("#" + id).dropdown();    
+    }else{
+        $("#" + id).dropdown(option);
+    }
 }
 
 function load_relationship_dropdown_field(id, dependents = []) {    

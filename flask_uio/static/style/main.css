@@ -23,3 +23,6 @@
         visibility:hidden;
     }
 }
+.ui.menu.custom {
+    border-radius: 0 !important;
+}

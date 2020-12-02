@@ -1,5 +1,5 @@
 import pathlib
-from setuptools import setup
+from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
 
@@ -7,8 +7,8 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name = 'flask_uio',
-    packages = ['flask_uio'],
-    version = '0.1.0',
+    packages = find_packages(),
+    version = '0.1.2',
     license='MIT',
     description = 'Build user interface by implementing object',
     author = 'Men Sopheak',
@@ -20,6 +20,9 @@ setup(
     install_requires=['flask', 'Flask-WTF', 'requests', 'cryptography', 'Flask-SQLAlchemy'],
     include_package_data=True,
     classifiers=[
+        'Development Status :: 1 - Planning',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',   
         'Programming Language :: Python :: 3.7',

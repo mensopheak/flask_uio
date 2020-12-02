@@ -23,8 +23,9 @@ class Button(Element):
     fluid = ValidProp(bool)
     color = ValidProp(str)
     tertiary = ValidProp(bool)
+    form_id = ValidProp(str)
     
-    def __init__(self, title, btn_type=None, url=None, basic=None, fluid=None, tertiary=None, color='primary', css_class=None):
+    def __init__(self, title, btn_type=None, url=None, form_id=None, basic=None, fluid=None, tertiary=None, color='primary', css_class=None):
         super().__init__('a' if url else 'input', hide_id=False)
         self.title = title
         self.url = url
@@ -33,11 +34,14 @@ class Button(Element):
         self.fluid = fluid
         self.tertiary = tertiary
         self.color = color
+        self.form_id = form_id
         if self.url:
             self.inner_text = self.title
             self.attrs = [('href', self.url)]
         else:
             self.attrs = self.attrs + [('value', title.title()), ('type', btn_type)]
+        if self.form_id:
+            self.attrs.append(('form', self.form_id))
         self.css_class = css_class or f'ui{self._get_opt_css_class()} button'
         
     def _get_opt_css_class(self):

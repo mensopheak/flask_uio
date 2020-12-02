@@ -22,6 +22,10 @@ class Body(BaseBody):
         
         result = []
         for obj in getattr(self, 'element'):
+            if isinstance(obj, ReqInjectScriptMixin):
+                script = Element('script', inner_text=obj.inject_script)
+                self.append_injected_script(script)
+            
             if isinstance(obj, Element):
                 result += obj.find_element(ReqInjectScriptMixin)
                 for field in result:

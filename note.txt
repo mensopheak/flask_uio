@@ -1,0 +1,11 @@
+pytest test_subject.py
+pytest test_subject.py -v
+
+py.test
+py.test -v : verbose
+py.test -v -x : if failure, exit
+py.test -v -x --tb=no
+py.test -v --maxfail=2
+py.test -v -s : allow print 
+
+pytest tests/test_core.py::TestCoreElement::test_tag_name_is_lower_case

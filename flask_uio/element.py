@@ -3,7 +3,6 @@ from .prop import ValidProp, ValidSequenceProp
 from .validator import Validator, Error, RequiredValidator
 from flask import request
 
-
 class Element(CoreElement):
     tag_name = ValidProp(str)
     css_class = ValidProp(str)
@@ -64,7 +63,7 @@ class Element(CoreElement):
             css_class = f' class="{self.css_class}"'
                 
         # tag id
-        tag_id = '' if self.hide_id else f' id="{self.id}" '
+        tag_id = '' if self.hide_id else f' id="{self.id}"'
         
         if self.tag_name == '':
             html = f'{inner_text}{inner_element_html}'
@@ -136,7 +135,6 @@ class Script(Element):
         self.src = src
         super().__init__('script', attrs=[('src', self.src)])
         
-
 class BaseHead(CoreElement):
     title = ValidProp(str, nullable=False)
     element = ValidSequenceProp(CoreElement)

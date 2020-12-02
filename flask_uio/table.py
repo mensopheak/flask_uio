@@ -1,22 +1,99 @@
 from datetime import datetime
 from operator import itemgetter
-from flask import request, url_for
+from flask import request, url_for, current_app
 from flask_sqlalchemy.model import DefaultMeta
 from flask_sqlalchemy import Pagination
 from .element import CoreElement
 from .mixin import ReqInjectScriptMixin
 from .prop import IntProp, ValidProp, ValidSequenceProp
 from .route import Route
-from .table_col_item import TableColItem
-from .table_date_item import TableDateItem
-from .table_datetime_item import TableDateTimeItem
-from .table_static_link_item import TableStaticLinkItem
 from .a import A
 from .element import Element
 from .modal import ConfirmModal
 from .form import Form
 from .button import Button
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
+class TableColItem:
+    name = ValidProp(str)
+    allow_search = ValidProp(bool)
+    is_key=ValidProp(bool)
+    is_hidden=ValidProp(bool)
+    default_sort=ValidProp(bool)
+    default_sort_asc=ValidProp(bool)
+    
+    def __init__(self, name, column=None, allow_search=True, is_key=False, is_hidden=False, default_sort=False, default_sort_asc=False):
+        self.name = name
+        self.column = column
+        self.allow_search = allow_search
+        self.is_key = is_key
+        self.is_hidden = is_hidden
+        self.default_sort = default_sort
+        self.default_sort_asc = default_sort_asc
+        
+    @property
+    def column(self):
+        return getattr(self, '_column', None)
+    
+    @column.setter
+    def column(self, value):
+        if value is not None:
+            if type(value) is not InstrumentedAttribute:
+                raise ValueError('sort column must be a type of InstrumentedAttribute.')
+        setattr(self, '_column', value)
+    
+    @property
+    def friendly_name(self):
+        return self.name.replace('_', ' ').title()
+    
+    def __repr__(self):
+        return f"ColItem(name='{self.name}', column={self.column}, allow_search={self.allow_search})"
+
+class TableDateItem(TableColItem):
+    format = ValidProp(str)
+    display_format = ValidProp(str)
+    
+    def __init__(self, name, db_column=None, is_hidden=False, format=None, display_format=None, default_sort=False, default_sort_asc=False):
+        super().__init__(name, db_column, allow_search=False, is_hidden=is_hidden, default_sort=default_sort, default_sort_asc=default_sort_asc)
+        self.format = format or current_app.config['FLASK_UIO_DATE_FORMAT']
+        self.display_format = display_format or current_app.config['FLASK_UIO_DATE_DISPLAY_FORMAT']
+        
+    def get_value(self, date_string):
+        if not isinstance(date_string, str):
+            raise ValueError(f'date string must be a string type.')
+        return datetime.strptime(date_string, self.format).date()
+    
+    def get_text(self, date):
+        if type(date) not in (datetime.date, datetime):
+            raise ValueError(f'date string must be a date type.')
+        return datetime.strftime(date, self.display_format)
+    
+class TableDateTimeItem(TableColItem):
+    format = ValidProp(str)
+    display_format = ValidProp(str)
+    
+    def __init__(self, name, db_column=None, is_hidden=False, format=None, display_format=None, default_sort=False, default_sort_asc=False):
+        super().__init__(name, db_column, allow_search=False, is_hidden=is_hidden, default_sort=default_sort, default_sort_asc=default_sort_asc)
+        self.format = format or current_app.config['FLASK_UIO_DATETIME_FORMAT']
+        self.display_format = display_format or current_app.config['FLASK_UIO_DATETIME_DISPLAY_FORMAT']
+        
+    def get_value(self, datetime_string):
+        if not isinstance(datetime_string, str):
+            raise ValueError(f'date string must be a string type.')
+        return datetime.strptime(datetime_string, self.format).date()
+    
+    def get_text(self, datetime_):
+        if not isinstance(datetime_, datetime):
+            raise ValueError(f'date string must be a datetime type.')
+        return datetime.strftime(datetime_, self.display_format)
+    
+class TableStaticLinkItem(TableColItem):
+    fp_col_name = ValidProp(str)
+    
+    def __init__(self, name, db_column=None, is_hidden=False, default_sort=False, default_sort_asc=False, fp_col_name=None):
+        super().__init__(name, db_column, allow_search=False, is_hidden=is_hidden, default_sort=default_sort, default_sort_asc=default_sort_asc)
+        self.fp_col_name = fp_col_name
+    
 class Table(CoreElement, ReqInjectScriptMixin):
     per_page = IntProp(min_value=1)
     pages = IntProp(min_value=0)

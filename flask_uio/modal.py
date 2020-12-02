@@ -41,15 +41,20 @@ class MessageModal(Element, ReqInjectScriptMixin):
         self.inject_script = f'load_modal("{self.calling_id}", "{self.id}");'
         
 class ConfirmModal(MessageModal):
-    def __init__(self, title, message, more_message=None, submit_url=None, yes='yes', yes_color='red', no='no', no_color='cancel', icon=None, calling_id=None):
+    def __init__(self, title, message, more_message=None, submit_url=None, yes='yes', yes_color='red', no='no', no_color='cancel', icon=None, calling_id=None, form_id=None):
         self.message = message
         self.more_message = more_message
         self.submit_url = submit_url
         self.yes_color = yes_color
         self.no_color = no_color
+        self.form_id = form_id
         content = Element('p', inner_text=message)
         more_content = Element('', inner_text=more_message)
-        yes = Button(yes, btn_type='submit', color=self.yes_color)
+        yes = Button(yes, btn_type='submit', color=self.yes_color, form_id=self.form_id)
         no = Button(no, btn_type='button', color=self.no_color)
-        form = Form(action=submit_url).append_inner(yes, no)
-        super().__init__(title, content_elements=[content, more_content], action_elements=[form], icon=icon, calling_id=calling_id)
+        form = []
+        if self.submit_url:
+            form.append(Form(action=submit_url).append_inner(yes, no))
+        else:
+            form.append(Element('div', css_class='ui form', inner_elements=[yes, no]))
+        super().__init__(title, content_elements=[content, more_content], action_elements=form, icon=icon, calling_id=calling_id)
