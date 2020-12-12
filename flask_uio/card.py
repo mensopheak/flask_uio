@@ -3,78 +3,135 @@ from .element import Element
 from .prop import IntProp, ValidProp
 
 class Card(Element):
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
+    """Card widget
+
+    Args:
+    
+        url (string, optional): link url. Defaults to None.
+    
+    Defaults:
+
+        If url, tag_name='a' or else 'div'
+        class='ui card'
+    """
+    
     url = ValidProp(str)
     
-    def __init__(self, *elements, url=None, opt_css_class=None, css_class=None):
-        super().__init__('div')
+    def __init__(self, *elements, url=None, **attrs):
+        super().__init__('div', **attrs)
         self.url = url
         if self.url:
             self.tag_name = 'a'
-            self.attrs = [('href', self.url)]
-        self.opt_css_class = opt_css_class
-        opt = ''
-        if self.opt_css_class:
-            opt += ' ' + self.opt_css_class    
-        self.css_class = css_class or f'ui{opt} card'
-        self.append_inner(*elements)
+            self.attrs.update({'href': self.url})
+        
+        self.css_class = self.attrs.get('_class') or f'ui card'
+        self.append(*elements)
         
 class CardImage(Element):
+    """Card image widget for showing image in card (Card widget's child)
+
+    Args:
+    
+        src (string): path to image.
+        
+    Defaults:
+
+        class='image'
+    """
     src = ValidProp(str)
+    
     def __init__(self, src):
         super().__init__('div')
+        self.src = src
         self.css_class = 'image'
-        self.append_inner(Element('img', attrs=[('src', src)]))
+        self.append(Element('img', _src=src))
         
 class Cards(Element):
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
+    """Cards widget for managing multiple cards
+
+    Args:
+    
+        nb_card (string, optional): number of cards. Defaults to None.
+
+    Raises:
+    
+        Exception: If child is not Card object.
+    """
+    
     nb_card = IntProp()
     
-    def __init__(self, *elements, nb_card=None, opt_css_class=None, css_class=None):
-        super().__init__('div')
-        self.opt_css_class = opt_css_class
+    def __init__(self, *cards, nb_card=None, **attrs):
+        
+        super().__init__('div', **attrs)
         self.nb_card = nb_card
         opt = ''
         if self.nb_card:
             opt += ' ' + get_word(self.nb_card)
-        if self.opt_css_class:
-            opt += ' ' + self.opt_css_class    
-        self.css_class = css_class or f'ui{opt} cards'
-        for e in elements:
-            if not isinstance(e, Card):
-                raise Exception('Element must be a Card Object.')
-            e.css_class.replace('ui ', '')
-            self.append_inner(e)
+        
+        self.css_class = self.attrs.get('_class') or f'ui{opt} cards'
+        
+        for card in cards:
+            if not isinstance(card, Card):
+                raise Exception('Invalid Card Object.')
+            card.css_class.replace('ui ', '')
+            self.append(card)
         
 class CardContent(Element):
-    def __init__(self, *elements):
-        super().__init__('div')
-        self.css_class = 'content'
-        self.append_inner(*elements)
-        
-class CardExtraContent(Element):
-    def __init__(self, *elements):
-        super().__init__('div')
-        self.css_class = 'extra content'
-        self.append_inner(*elements)
+    """Card content widget used for adding content to card
+    
+    Defaults:
+    
+        class='content'
+    """
+    def __init__(self, *cards, **attrs):
+        super().__init__('div', **attrs)
+        self.css_class = self.attrs.get('_class') or 'content'
+        self.append(*cards)
         
 class CardContentHeader(Element):
-    def __init__(self, title):
-        super().__init__('div')
-        self.css_class = 'header'
-        self.inner_text = title
+    """Card content header widget 
+    add header to card content
+
+    Args:
+        title (string): header's title
+        
+    Defaults:
+
+        class='header'
+    """
+    def __init__(self, title, **attrs):
+        super().__init__('div', inner_text=title, **attrs)
+        self.css_class = self.attrs.get('_class') or 'header'
         
 class CardContentMeta(Element):
-    def __init__(self, text):
-        super().__init__('div')
+    """Card content meta widget 
+    add meta to card content
+
+    Args:
+    
+        text (string): meta text
+        
+    Defaults:
+
+        class='meta'
+    """
+    def __init__(self, text, **attrs):
+        super().__init__('div', text, **attrs)
         self.css_class = 'meta'
-        self.inner_text = text
         
 class CardContentDesc(Element):
-    def __init__(self, text):
-        super().__init__('div')
+    """Card content description widget 
+    add description to card content
+
+    Args:
+    
+        text (string): description
+        
+    Defaults:
+
+        class='description'
+    """
+    def __init__(self, text, **attrs):
+        super().__init__('div', text, **attrs)
         self.css_class = 'description'
-        self.inner_text = text
         

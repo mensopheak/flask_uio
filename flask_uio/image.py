@@ -2,26 +2,38 @@ from .prop import ValidProp
 from .element import Element
 
 class Image(Element):
-    src = ValidProp(str)
-    opt_css_class = ValidProp(str)
-    
-    def __init__(self, src, opt_css_class=None, css_class=None):
-        super().__init__('img')
-        self.src = src
-        self.attrs = [('src', self.src)]
-        self.opt_css_class = ' ' + opt_css_class if opt_css_class else ''
-        self.css_class = css_class or f'ui{self.opt_css_class} image'
+    """Image widget
+
+    Args:
+        src (string): img's src.
         
-class ImageLink(Element):
+    More Info:
+
+        - https://fomantic-ui.com/elements/image.html
+    """
+    src = ValidProp(str)
+    
+    def __init__(self, src, **attrs):
+        super().__init__('img', **attrs)
+        self.src = src
+        self.attrs.update({'src': self.src})
+        self.css_class = self.attrs.get('_class') or f'ui medium image'
+        
+class LinkImage(Element):
+    """Link Image widget
+
+    Args:
+        src (string): img's src.
+        url (string): link url.
+        
+    """
     src = ValidProp(str)
     url = ValidProp(str)
-    opt_css_class = ValidProp(str)
     
-    def __init__(self, src, url, opt_css_class=None, css_class=None):
-        super().__init__('a')
+    def __init__(self, src, url, **attrs):
+        super().__init__('a', **attrs)
         self.src = src
         self.url = url
-        self.attrs = [('href', self.url)]
-        self.append_inner(Image(self.src, css_class=''))
-        self.opt_css_class = ' ' + opt_css_class if opt_css_class else ''
-        self.css_class = css_class or f'ui{self.opt_css_class} image'
+        self.attrs.update({'href': self.url})
+        self.append(Element('img', self_closing_tag=True, _src=self.src))
+        self.css_class = self.attrs.get('_class') or f'ui medium image'

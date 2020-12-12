@@ -1,48 +1,79 @@
 from .element import Element
 from .prop import ValidProp
 from .mixin import ReqInjectScriptMixin
-from .icon import Icon
 
 class Dropdown(Element, ReqInjectScriptMixin):
-    title = ValidProp(str)
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
+    """Dropdown widget 
+
+    Args:
     
-    def __init__(self, title, *elements, opt_css_class=None, css_class=None):
-        super().__init__('div', hide_id=False)
+        title (string): dropdown's title
+        
+    Defaults:
+
+        class='ui dropdown'
+    
+    """
+    
+    title = ValidProp(str)
+    
+    def __init__(self, title, *dropdown_menus, **attrs):
+        super().__init__('div', hide_id=False, **attrs)
         self.title = title
-        self.opt_css_class = opt_css_class or ''
-        self.css_class = css_class or f'ui{self.opt_css_class} dropdown'
-        self.append_inner(Element('div', css_class='text', inner_text=title))
-        self.append_inner(Icon('dropdown icon'))
-        self.append_inner(*elements)
+        self.css_class = self.attrs.get('_class') or f'ui dropdown'
+        self.append(Element('div', inner_text=title, _class='text'))
+        self.append(Element('i', _class='dropdown icon'))
+        self.append(*dropdown_menus)
         self.inject_script = f'load_dropdown("{self.id}", {{on: "hover"}});'
         
 class DropdownMenu(Element):
-    def __init__(self, *elements):
-        super().__init__('div')
-        for e in elements:
-            self.append_inner(e)
-        self.css_class = 'menu'
+    """Dropdown menu widget
+    
+    Defaults:
+    
+        class='menu'
+    """
+    def __init__(self, *dropdown_menu_items, **attrs):
+        super().__init__('div', **attrs)
+        self.append(*dropdown_menu_items)
+        self.css_class = self.attrs.get('_class') or 'menu'
         
 class DropdownMenuItem(Element):
+    """Dropdown menu item
+
+    Args:
+    
+        name (string): item's name
+        url (string, optional): link url. Defaults to None.
+        icon (Element, optional): item's icon. Defaults to None.
+        desc (string, optional): item's description. Defaults to None.
+        
+    Defaults:
+    
+        class='item'
+    """
     name = ValidProp(str)
     url = ValidProp(str)
-    icon = ValidProp(Icon)
+    icon = ValidProp(Element)
     desc = ValidProp(str)
     
-    def __init__(self, name, url=None, icon=None, desc=None, css_class=None):
-        super().__init__('div')
+    def __init__(self, name, url=None, icon=None, desc=None, **attrs):
+        
+        super().__init__('div', **attrs)
         self.inner_text = name
+        
         self.url = url
         if self.url:
             self.tag_name = 'a'
-            self.attrs = [('href', self.url)]
-        self.desc = desc
+            self.attrs.update({'href': self.url})
+        
         self.icon = icon
         if self.icon:
-            self.append_inner(icon)
+            self.append(icon)
+            
+        self.desc = desc
         if self.desc:
-            self.append_inner(Element('span', css_class='description', inner_text=self.desc))
-        self.css_class = css_class or f'item'
+            self.append(Element('span', inner_text=self.desc, _class='description'))
+            
+        self.css_class = self.attrs.get('_class') or f'item'
         

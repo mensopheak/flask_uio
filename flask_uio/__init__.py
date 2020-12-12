@@ -1,32 +1,32 @@
-__version__ = '0.1.2'
+__version__ = '0.1.5'
 
 from .prop import ValidProp, ValidSequenceProp, IntProp
 from .mixin import ReqInjectLinkMixin, ReqInjectScriptMixin
-from .element import Element, Link, Script
+from .element import Element, Link, Script, Head, Body, Html
+from .base import Document, FomanticBody, FomanticHead
 from .core import CoreElement
-from .basic import Document, Head, Body
-from .base import Document, FomanticHead, FomanticBody
 from .func import number_dict, get_word
 from .token import Token
-from .icon import Icon, LinkIcon
-from .button import Button
-from .modal import MessageModal, ConfirmModal
+from .button import Button, LinkButton
 from .container import Container
-from .segment import Segment, Segments
-from .text import Text
-from .a import A
-from .divider import Divider
 from .route import Route
-from .form import Form
-from .field import Field, UploadField, DropDownField, QueryDropDownField, TextField, TextAreaField, TextAreaSummernoteField, CheckBoxField, DateField, DateTimeField
 from .validator import Validator, RequiredValidator, RegexValidator, PhoneValidator, EmailValidator, StringValidator, UploadValidator, DateValidator, DateTimeValidator
-from .table import Table, TableColItem, TableDateItem, TableDateTimeItem, TableStaticLinkItem
-from .grid import Grid, GridColumn, GridRow
-from .card import Card, CardContent, Cards, CardContentHeader, CardContentMeta, CardExtraContent, CardContentDesc, CardImage
+from .card import Card, CardContent, Cards, CardContentHeader, CardContentMeta, CardContentDesc, CardImage
 from .dropdown import Dropdown, DropdownMenu, DropdownMenuItem
+from .divider import Divider
+from .form import Form
+from .icon import Icon, LinkIcon
+from .modal import MessageModal, ConfirmModal
+from .image import Image, LinkImage
+from .text import Text
+from .breadcrumb import Breadcrumb, BreadcrumbDividerIcon, BreadcrumbSection
+from .message import Message
+from .field import Field, UploadField, DropDownField, QueryDropDownField, TextField, TextAreaField, TextAreaSummernoteField, CheckBoxField, DateField, DateTimeField
+from .table import Table, TableColItem, TableDateItem, TableDateTimeItem, TableStaticLinkItem
+from .segment import Segment, Segments
+from .grid import Grid, GridColumn, GridRow
 from .menu import Menu, MenuActiveItem, MenuDisableItem, MenuHeaderItem, MenuItem, RightMenu
 from .sidebar import SideBar
-from .image import Image, ImageLink
 
 class FlaskUIO(object):
     def __init__(self, app=None):

@@ -51,6 +51,45 @@ def get_card(title):
     '''
     return uio.Element('div', css_class='ui fluid card', inner_text=inner_text)
 
+@app.route('/message')
+def load_message():
+    msg1 = uio.Message('The transaction is commited sucessfully.', 'success', 'The transaction is commited sucessfully.', has_segment=True, hideable=False)
+    msg2 = uio.Message('The transaction is commited sucessfully.', 'negative', 'The transaction is commited sucessfully.', icon=uio.Icon('inbox icon'), has_segment=True, hideable=False)
+    msg3 = uio.Message('The transaction is commited sucessfully.', 'success', icon=uio.Icon('inbox icon'), has_segment=True, hideable=False)
+    msg4 = uio.Message('The transaction is commited sucessfully.', 'success', 'The transaction is commited sucessfully.', icon=uio.Icon('inbox icon'), has_segment=True, hideable=False)
+    msg5 = uio.Message('The transaction is commited sucessfully.', 'blue', has_segment=True, hideable=False)
+    doc = uio.Document('Fomantic Ui - Image')
+    doc.body.append(msg1, msg2, msg3, msg4, msg5)
+    return Markup(doc.get_html())
+
+@app.route('/breadcrumb')
+def load_breadcrumb():
+    b1 = uio.Breadcrumb()
+    b1.append_inner(
+        uio.BreadcrumbSection('Home', 'home', True)
+    )
+    b2 = uio.Breadcrumb()
+    b2.append_inner(
+        uio.BreadcrumbSection('Home', 'home', False),
+        uio.BreadcrumbDividerIcon(),
+        uio.BreadcrumbSection('List', 'list', False),
+        uio.BreadcrumbDividerIcon(),
+        uio.BreadcrumbSection('Info',is_active=True),
+    )
+    b3 = uio.Breadcrumb(is_dividing=False)
+    b3.append_inner(
+        uio.BreadcrumbSection('Home', 'home', False),
+        uio.BreadcrumbDividerIcon(),
+        uio.BreadcrumbSection('List', 'list', False),
+        uio.BreadcrumbDividerIcon(),
+        uio.BreadcrumbSection('Info',is_active=True),
+    )
+    
+    segment = uio.Segment(b1, b2, b3, opt_css_class='basic')
+    doc = uio.Document('Fomantic Ui - Image')
+    doc.body.append(segment)
+    return Markup(doc.get_html())
+
 @app.route('/image')
 def load_image():
     img1 = uio.Image(url_for('static', filename='vlogo.png'), opt_css_class='centered')
@@ -255,6 +294,7 @@ def index():
 @app.route('/table', methods=['GET', 'POST'])
 def load_table():
     doc = uio.Document('Fomantic Ui')
+    
     table = uio.Table(
         title='Post',
         reload_route=uio.Route('load_table'),
@@ -266,7 +306,7 @@ def load_table():
             uio.TableColItem('id', Post.id, is_key=True),
             uio.TableColItem('title', Post.title),
             uio.TableColItem('content', Post.content),
-            uio.TableColItem('category_name', Category.name),
+            uio.TableStaticLinkItem('category_name', Category.name, fp_col_name='category_name'),
         ],
         allow_paginate=True,
         allow_search=True,
@@ -287,7 +327,8 @@ def load_table():
         .paginate(**table.paginate)
     )
     table.refresh(data)
-    content = uio.Segment(table, opt_css_class='basic')
+    message = uio.Message('The transaction is successfully.','success', has_segment=True)
+    content = uio.Segment(message, uio.A(url='http://google.com', text='google', target='_blank'), table, opt_css_class='basic')
     doc.body.append(content)
     return Markup(doc.get_html())
 
@@ -327,6 +368,7 @@ def form():
         field_id='id',
         field_name='name',
         from_table='category',
+        order_by='name desc',
     )
     post = uio.QueryDropDownField(
         'post',

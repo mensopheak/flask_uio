@@ -1,61 +1,59 @@
 from .core import CoreElement
 from .prop import ValidProp, ValidSequenceProp
 from .validator import Validator, Error, RequiredValidator
+from .mixin import ReqInjectScriptMixin
 from flask import request
 
 class Element(CoreElement):
+    """Element is the core of FlaskUIO, it is basically to build an HTML element/tag string.
+
+    Args:
+    
+        tag_name (string): html tag name.
+        inner_text (string, optional): element's inner text. Defaults to None.
+        hide_id (bool, optional): hide id attribute. Defaults to True.
+        self_closing_tag (bool, optional): open-close tags or single tag. Defaults to False.
+        **attrs : html's attribute, use "_" following by attribute's name.
+            Example: _class='container', _style='color: red;'
+        
+    """
+    
     tag_name = ValidProp(str)
     css_class = ValidProp(str)
-    attrs = ValidSequenceProp(tuple)
     inner_text = ValidProp(str)
-    _inner_elements = ValidSequenceProp(CoreElement)
-    _prev_elements = ValidSequenceProp(CoreElement)
-    _next_elements = ValidSequenceProp(CoreElement)
-    is_self_closing_tag = ValidProp(bool)
     hide_id = ValidProp(bool)
+    self_closing_tag = ValidProp(bool)
+    _inner_elements = ValidSequenceProp(CoreElement)
     
-    def __init__(self, tag_name, css_class=None, inner_text=None, inner_elements=None, prev_elements=None, next_elements=None, attrs=None, is_self_closing_tag=False, hide_id=True):
+    def __init__(self, tag_name, inner_text=None, hide_id=True, self_closing_tag=False, **attrs):
+        
+        
         super().__init__(tag_name)
         self.tag_name = tag_name
-        self.css_class = css_class
-        self.attrs = attrs
-        self.inner_text = inner_text
-        self._inner_elements = inner_elements
-        self._prev_elements = prev_elements
-        self._next_elements = next_elements
-        self.is_self_closing_tag = is_self_closing_tag
         self.hide_id = hide_id
+        self.attrs = attrs
+        self.css_class = self.attrs.get('_class')
+        self.inner_text = inner_text
+        self.self_closing_tag = self_closing_tag
+        setattr(self, '_inner_elements', []) 
     
     def get_html(self):
+        """Generate html string
+
+        Returns: string
+        """
+        
         # inner text
         inner_text = self.inner_text if self.inner_text else ''
         
         # attributes
-        attrs = ''
-        if self.attrs:
-            for k, v in self.attrs:
-                if k and v is not None:
-                    attrs += f' {k}="{v}"'
-                elif k and v is None:
-                    attrs += f' {k}'
+        attrs = self._get_string_attrs(**self.attrs)
             
         # inner_elements
         inner_element_html = ''
         if self._inner_elements:
             for obj in self._inner_elements:
                 inner_element_html += obj.get_html()
-                
-        # prev_elements
-        prev_element_html = ''
-        if self._prev_elements:
-            for obj in self._prev_elements:
-                prev_element_html += obj.get_html()
-                
-        # next_elements
-        next_element_html = ''
-        if self._next_elements:
-            for obj in self._next_elements:
-                next_element_html += obj.get_html()     
                 
         # css class
         css_class = ''
@@ -68,155 +66,246 @@ class Element(CoreElement):
         if self.tag_name == '':
             html = f'{inner_text}{inner_element_html}'
         else:
-            if self.is_self_closing_tag:
+            if self.self_closing_tag:
                 html = f'<{self.tag_name}{tag_id}{css_class}{attrs} />'
             else:
                 html = f'<{self.tag_name}{tag_id}{css_class}{attrs}>{inner_element_html}{inner_text}</{self.tag_name}>'
         
-        return prev_element_html + html + next_element_html
+        return html
         
-    def append_inner(self, *elements):
+    def append(self, *elements):
+        """Append inner elements
+
+        Returns: self
+        """
+        if not hasattr(self, '_inner_elements'):
+            setattr(self, '_inner_elements', [])
+        
         for element in elements:
             self._append_element(self, '_inner_elements', element)
         return self
-        
-    def append_prev(self, *elements):
-        for element in elements:
-            self._append_element(self, '_prev_elements', element)
-        return self
-        
-    def append_next(self, *elements):
-        for element in elements:
-            self._append_element(self, '_next_elements', element)   
-        return self     
     
-    def find_element(self, *type_):
+    def find_element(self, *types):
+        """Find inner element by type
+
+        Returns: list[Element]
+        """
+        
         result = []
         if self._inner_elements:
             for obj in self._inner_elements:
-                if isinstance(obj, type_):
+                if isinstance(obj, types):
                     result += [obj]
                 else:
                     if hasattr(obj, 'find_element'):
-                        finding = obj.find_element(type_)
+                        finding = obj.find_element(types)
                         if len(finding) > 0:
                             result += finding
-        if self._prev_elements:
-            for obj in self._prev_elements:
-                if isinstance(obj, type_):
-                    result += [obj]
-                else:
-                    if hasattr(obj, 'find_element'):
-                        finding = obj.find_element(type_)
-                        if len(finding) > 0:
-                            result += finding
-        if self._next_elements:
-            for obj in self._next_elements:
-                if isinstance(obj, type_):
-                    result += [obj]
-                else:
-                    if hasattr(obj, 'find_element'):
-                        finding = obj.find_element(type_)
-                        if len(finding) > 0:
-                            result += finding
+        
         return result
-    
+            
 class Link(Element):
+    """Link widget for building html link element
+
+    Args:
+        href (str, optional): url path. Defaults to 'index.css'.
+    """
     href = ValidProp(str)
     
     def __init__(self, href='index.css'):
         self.href = href
-        super().__init__('link', attrs=[('rel', 'stylesheet'), ('type', 'text/css'), ('href', self.href)], is_self_closing_tag=True)
+        super().__init__('link', self_closing_tag=True, _rel='stylesheet', _type='text/css', _href=self.href)
         
 class Script(Element):
+    """Script widget for building html script element
+
+    Args:
+        src (str, optional): url path. Defaults to 'index.js'.
+    """
     src = ValidProp(str)
     
     def __init__(self, src='index.js'):
         self.src = src
-        super().__init__('script', attrs=[('src', self.src)])
+        super().__init__('script', _src=self.src)
         
-class BaseHead(CoreElement):
+class Head(CoreElement):
+    """Head widget for building html head element.
+
+    Args:
+        title (string): Page's title
+        elements (list[Element], optional): list of element. Defaults to None.
+        links (list[Link], optional): list of link. Defaults to None.
+        scripts (list[Script], optional): list of script. Defaults to None.
+    """
     title = ValidProp(str, nullable=False)
-    element = ValidSequenceProp(CoreElement)
-    link = ValidSequenceProp(CoreElement)
-    script = ValidSequenceProp(CoreElement)
+    _elements = ValidSequenceProp(CoreElement)
+    _links = ValidSequenceProp(CoreElement)
+    _scripts = ValidSequenceProp(CoreElement)
     
-    def __init__(self, title, element=None, link=None, script=None):
+    def __init__(self, title, elements=None, links=None, scripts=None, **attrs):
+        
         super().__init__('head')
         self.title = title
-        self.element = element
-        self.link = link
-        self.script = script
-        self.element.append(Element('title', inner_text=title))
+        self._elements = elements
+        self._links = links
+        self._scripts = scripts
+        self.attrs = attrs
+        self.append(Element('title', inner_text=title))
+        self.append(Element('meta', _charset='UTF-8'))
+        self.append(Element('meta', _name='viewport', _content='width=device-width, initial-scale=1.0'))
     
     def append(self, *elements):
+        """Append inner elements"""
         for element in elements:
-            self._append_element(self, 'element', element)
+            self._append_element(self, '_elements', element)
         
-    def append_link(self, *href_args):
-        for href in href_args:
+    def append_link(self, *hrefs):
+        """Append link"""
+        for href in hrefs:
             if not isinstance(href, str):
-                raise ValueError('Each href must be a string.')
+                raise ValueError('href must be a string.')
             link = Link(href)
-            self._append_element(self, 'link', link)
+            self._append_element(self, '_links', link)
         
-    def append_script(self, *src_args):
-        for src in src_args:
+    def append_script(self, *srcs):
+        """Append script"""
+        for src in srcs:
             if not isinstance(src, str):
-                raise ValueError('Each src must be a string.')
-            self._append_element(self, 'script', Script(src))
+                raise ValueError('src must be a string.')
+            self._append_element(self, '_scripts', Script(src))
 
     def get_html(self):
+        """Generate html string
+
+        Returns: string
+        """
         html = ''
-        fields = ['element', 'link', 'script']
+        fields = ['_elements', '_links', '_scripts']
         for field in fields:
             elements = getattr(self, field)
             for obj in elements:
                 html += obj.get_html()
         
-        return f'<{self.tag_name}>{html}</{self.tag_name}>'
+        # exclude _class 
+        attrs = self._get_string_attrs(**self.attrs)
+        
+        return f'<{self.tag_name}{attrs}>{html}</{self.tag_name}>'
+class Body(CoreElement):
+    '''Body widget for building html body element.
     
-class BaseBody(CoreElement):
-    element = ValidSequenceProp(CoreElement)
-    script = ValidSequenceProp(CoreElement)
-    _injected_script = ValidSequenceProp(CoreElement)
+    Args:
+        elements (list[Element], optional): list of element. Defaults to None.
+        scripts (list[Script], optional): list of script. Defaults to None.
+        injected_scripts (list[Script], optional): list of script that will be injected later. Defaults to None.
     
-    def __init__(self, element=None, script=None, injected_script=None):
+    '''
+    
+    _elements = ValidSequenceProp(CoreElement)
+    _scripts = ValidSequenceProp(Script)
+    _injected_scripts = ValidSequenceProp(Script)
+    
+    def __init__(self, elements=None, scripts=None, injected_scripts=None, **attrs):
         super().__init__('body')
-        self.element = element
-        self.script = script
-        self._injected_script = injected_script
+        self._elements = elements
+        self._scripts = scripts
+        self._injected_scripts = injected_scripts
+        self.attrs = attrs
+        self.css_class = self.attrs.get('_class')
     
     def append(self, *elements):
-        for element in elements:
-            self._append_element(self, 'element', element)
+        """Append elements to body"""
         
-    def append_script(self, *src_args):
-        for src in src_args:
+        for element in elements:
+            self._append_element(self, '_elements', element)
+        
+    def append_script(self, *srcs):
+        """Append scripts to body"""
+        
+        for src in srcs:
             if not isinstance(src, str):
                 raise ValueError('Each src must be a string.')
-            self._append_element(self, 'script', Script(src))
+            self._append_element(self, '_scripts', Script(src))
             
-    def append_injected_script(self, *elements):
-        for element in elements:
-            self._append_element(self, '_injected_script', element)
+    def append_injected_script(self, *scripts):
+        """Append injected scripts to body"""
+        
+        for element in scripts:
+            self._append_element(self, '_injected_scripts', element)
 
     def get_html(self):
+        """Generate html string
+        
+        Return: string
+        """
+        
         html = ''
         injected_script = ''
-        fields = ['element', 'script']
+        fields = ['_elements', '_scripts']
         for field in fields:
             for obj in getattr(self, field):
                 html += obj.get_html()
         
-        # Check for injected script
-        if len(self._injected_script) > 0:
-            for script in self._injected_script:
-                injected_script += script.get_html()
+        inject_elements = []
+        for obj in getattr(self, '_elements'):
+            if isinstance(obj, ReqInjectScriptMixin):
+                script = Element('script', inner_text=obj.inject_script)
+                self.append_injected_script(script)
+            
+            if isinstance(obj, Element):
+                inject_elements += obj.find_element(ReqInjectScriptMixin)
+                for field in inject_elements:
+                    script = Element('script', inner_text=field.inject_script)
+                    self.append_injected_script(script)
         
-        return f'<{self.tag_name}>{html}{injected_script}</{self.tag_name}>'
+        # Check for injected script
+        if len(self._injected_scripts) > 0:
+            for script in self._injected_scripts:
+                injected_script += script.get_html()
+                
+        # exclude _class
+        attrs = self._get_string_attrs(**self.attrs)
+        
+        # independent attr for sub-class customization
+        css_class = ''
+        if self.css_class:
+            css_class = f' class="{self.css_class}"'
+        
+        return f'<{self.tag_name}{css_class}{attrs}>{html}{injected_script}</{self.tag_name}>'
+
+class Html():
+    """Html widget for building html element.
+
+    Args:
+        title (string): Page's title
+        
+    """
+    def __init__(self, title):
+        self.head = Head(title)
+        self.body = Body()
     
+    def get_html(self):
+        doctype = '<!DOCTYPE html>'
+        html = Element('html', _lang='en')
+        head_html = self.head.get_html()
+        body_html = self.body.get_html()
+        html.inner_text = head_html + body_html
+        return doctype + html.get_html()
+
 class FieldElement(Element):
+    """Field element is used for providing functionality to form field.
+
+    Args:
+    
+        tag_name (string): html tag name.
+        id (string, optional): set custom id html attribute. Defaults to None.
+        name (string, optional): set name html attribute. Defaults to None.
+        placeholder (string, optional): set placeholder. Defaults to None.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        required (bool, optional): set required attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+        validators (list[Validator], optional): add validators (auto add RequiredValidator if required). Defaults to None.
+    """
+    id = ValidProp(str)
     name = ValidProp(str)
     placeholder = ValidProp(str)
     disabled = ValidProp(bool)
@@ -225,73 +314,77 @@ class FieldElement(Element):
     error = ValidProp(Error)
     validators = ValidSequenceProp(Validator)
     
-    def __init__(
-        self, 
-        tag_name, 
-        id=None, 
-        name=None, 
-        placeholder=None, 
-        disabled=False, 
-        required=False, 
-        readonly=False, 
-        css_class=None, 
-        attrs=None,
-        validators=None,
-        ):
+    def __init__(self, tag_name, id=None, name=None, placeholder=None, disabled=False, required=False, readonly=False, validators=None, **attrs):
         
-        super().__init__(tag_name, hide_id=False, css_class=css_class, attrs=attrs)
+        super().__init__(tag_name, hide_id=False, **attrs)
         
         self.id = id if id else self.id
         self.name = name.replace('_', ' ').title()
         self.placeholder = placeholder if placeholder else self.name
         self.disabled = disabled
+        self.readonly = readonly
+        self.error = Error(False)
         self.required = required
+        
         self.validators = []
         if self.required:
             self.validators.append(RequiredValidator())
+        
         if validators:
             self.validators = self.validators + validators
-        self.readonly = readonly
-        self.error = Error(False)
         
-        main_attrs = []
+        opt_attrs = {}
         
         if self.name:
-            main_attrs.append(('name', self.name))
+            opt_attrs.update({'_name': self.name})
+            
         if self.placeholder:
-            main_attrs.append(('placeholder', self.placeholder))
-        # turn on if use html5 validator
-        # if self.required:
-        #     main_attrs.append(('required', None))
+            opt_attrs.update({'_placeholder': self.placeholder})
+            
         if self.readonly:
-            main_attrs.append(('readonly', None))
+            opt_attrs.update({'_readonly': True})
+            
         if self.disabled:
-            main_attrs.append(('disabled', None))
+            opt_attrs.update({'_disabled': True})
         
-        if len(list(self.attrs)) == 0:
-            self.attrs = []
-            
-        self.attrs = main_attrs + self.attrs
-            
-        if len(self.attrs) == 0:
-            self.attrs = None
+        self.attrs.update(opt_attrs)
+        self._data = None
             
     @property
     def form_data(self):
+        """Request form data
+
+        Returns:
+            data: request form data
+        """
         is_multiple = getattr(self, 'is_multiple', None)
         if is_multiple:
-            return request.form.getlist(self.name)
-        return request.form.get(self.name, None)
+            data = request.form.getlist(self.name)
+        data = request.form.get(self.name, None)
+        if data:
+            return data
+        else:
+            return self._data
     
     @property
     def data(self):
+        """Override depend on field data type"""
         pass
     
     @data.setter
     def data(self, value):
+        """Override depend on field data type"""
         pass
     
     def validate(self):
+        """Validate form data
+
+        Raises:
+            Exception: if not an instance of Validator.
+
+        Returns:
+            Error: status and message.
+        """
         if request.method in ('PUT', 'POST', 'DELETE'):
             for v in self.validators:
                 if not isinstance(v, Validator):

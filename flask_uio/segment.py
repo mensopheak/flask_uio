@@ -2,28 +2,24 @@ from .element import Element, CoreElement
 from .prop import ValidProp
 
 class Segment(Element):
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
-    
-    def __init__(self, *elements, opt_css_class=None, css_class=None):
-        super().__init__('div')
+    """Segment widget"""
+    def __init__(self, *elements, **attrs):
+        super().__init__('div', **attrs)
         for e in elements:
             if not isinstance(e, CoreElement):
                 raise ValueError('Element must be an instance of CoreElement.')
-            self.append_inner(e)
-        self.opt_css_class = opt_css_class
-        self.css_class = css_class if css_class else f'ui {opt_css_class} segment'
+            self.append(e)
+        if self.css_class is None:
+            self.css_class = f'ui segment'
         
 class Segments(Element):
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
-    
-    def __init__(self, *segments, opt_css_class=None, css_class=None):
-        super().__init__('div')
+    """Segments widget for grouping segments"""
+    def __init__(self, *segments, **attrs):
+        super().__init__('div', **attrs)
         for e in segments:
             if not isinstance(e, Segment):
                 raise ValueError('The object must be an instance of Segment.')
-            self.append_inner(e)
-        self.opt_css_class = opt_css_class
-        self.css_class = css_class if css_class else f'ui {opt_css_class} segments'
+            self.append(e)
+        if self.css_class is None:
+            self.css_class = f'ui segments'
         

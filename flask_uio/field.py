@@ -10,6 +10,15 @@ import os
 import requests
 
 class Field(Element):
+    """Field widget for styling control with fomantic-ui.
+
+    Args:
+        required (bool, optional): apply required style. Defaults to False.
+        error (bool, optional): apply error style. Defaults to False.
+        disabled (bool, optional): apply disabled style. Defaults to False.
+        css_class (string, optional): apply custom style. Defaults to None.
+        
+    """
     def __init__(self, *elements, required=False, error=False, disabled=False, css_class=None):
         super().__init__('div')
         required_field = 'required ' if required else ''
@@ -18,26 +27,45 @@ class Field(Element):
         default_css = 'field'
         css_class = css_class if css_class else default_css
         self.css_class = f'{required_field}{css_class}{error_field}{disabled_field}'
-        self.append_inner(*elements)
+        self.append(*elements)
 
 class CheckBoxField(FieldElement, ReqInjectScriptMixin):
+    """Checkbox field widget 
+
+    Args:
+        name (string): input's name.
+        disabled (bool, optional): apply disabled style. Defaults to False.
+        readonly (bool, optional): apply readonly attribute to input. Defaults to False.
+        **attrs : html attributes.
+    """
     _value = ValidProp(bool)
     
-    def __init__(self, name, disabled=False, readonly=False):
+    def __init__(self, name, disabled=False, readonly=False, **attrs):
         super().__init__('', name=name, disabled=disabled, readonly=readonly, required=False)
-        self.attrs = self.attrs + [('type', 'checkbox'), ('tabindex', '0'), ('class', 'hidden')]
+        # input
+        self._input_attrs = {
+            'type': 'checkbox',
+            'tabindex': '0',
+            'class': 'hidden',
+        }
+        self._input_attrs.update(attrs)
+        self.input = Element('input', **self._input_attrs)
         
-        self.input = Element('input', attrs=self.attrs)
-        input_wrapper = Element('div', hide_id=False , css_class='ui checkbox', inner_elements=[
-            self.input,
+        # input wrapper
+        wrapper = Element('div', hide_id=False, _class='ui checkbox')
+        wrapper.append(
+            self.input, 
             Element('label', inner_text=self.name.replace('_', ' ').title())
-        ])
+        )
         
+        # field validation
         self.validate()
         
-        wrapper = Field(input_wrapper, required=self.required, disabled=self.disabled, error=self.error.status, css_class='inline field')
-        self.append_inner(wrapper)
-        self.inject_script = f'load_checkbox_field("{input_wrapper.id}");'
+        # field wrapper 
+        field_wrapper = Field(wrapper, required=self.required, disabled=self.disabled, error=self.error.status, css_class='inline field')
+        
+        self.append(field_wrapper)
+        self.inject_script = f'load_checkbox_field("{wrapper.id}");'
         
     @property
     def data(self):
@@ -46,23 +74,34 @@ class CheckBoxField(FieldElement, ReqInjectScriptMixin):
     @data.setter
     def data(self, value):
         if value:
-            self.input.attrs.append(('checked', ''))
+            self.input.attrs.update({'checked': True})
+            self._data = value
 
 class DateField(FieldElement, ReqInjectScriptMixin):
-    
+    """Date field widget
+
+    Args:
+        name (string): input's name
+        required (bool, optional): set required attribute. Defaults to False.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+        placeholder (string, optional): set placeholder. Defaults to None.
+        validators (list[Validator], optional): add validators (auto add RequiredValidator if required). Defaults to None.
+        
+    """
     def __init__(self, name, required=False, disabled=False, readonly=False, placeholder=None, validators=None):
+        
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required, validators=validators)
-        self.attrs = self.attrs + [('type', 'text')]
         self.py_format = current_app.config['FLASK_UIO_DATE_DISPLAY_FORMAT']
         self.js_format = current_app.config['FLASK_UIO_DATE_JS_FORMAT']
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
         
-        self.input = Element('input', attrs=self.attrs)
-        self.input_wrapper = Element('div', hide_id=False , css_class='ui calendar', inner_elements=[
-            Element('div', css_class='ui input', inner_elements=[
-                self.input
-            ])
-        ])
+        self.attrs.update({'type': 'text', 'autocomplete': 'off'})
+        self.input = Element('input', **self.attrs)
+        self.input_wrapper = Element('div', hide_id=False, _class='ui calendar')
+        self.input_wrapper.append(
+            Element('div', _class='ui input').append(self.input)
+        )
         
         # validate
         self.validate()
@@ -70,8 +109,8 @@ class DateField(FieldElement, ReqInjectScriptMixin):
         # ui
         wrapper = Field(label, self.input_wrapper, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.status:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', self.error.message, _class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
         self.inject_script = f'load_date_field("{self.input_wrapper.id}", "{self.js_format}");'
 
     @property
@@ -87,34 +126,44 @@ class DateField(FieldElement, ReqInjectScriptMixin):
             raise ValueError(f'{self.name} must be a date/datetime.')
         # reset ui
         fm_date = datetime.strftime(value, self.py_format) if value else self.form_data
-        self.input.attrs.append(('value', fm_date))
+        self.input.attrs.update({'value': fm_date})
+        self._data = value
         
 class DateTimeField(FieldElement, ReqInjectScriptMixin):
+    """DateTime field widget
+
+    Args:
+        name (string): input's name
+        required (bool, optional): set required attribute. Defaults to False.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+        placeholder (string, optional): set placeholder. Defaults to None.
+        validators (list[Validator], optional): add validators (auto add RequiredValidator if required). Defaults to None.
+        
+    """
     def __init__(self, name, required=False, disabled=False, readonly=False, placeholder=None, validators=None):
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required, validators=validators)
-        self.attrs = self.attrs + [('type', 'text')]
         self.py_format = current_app.config['FLASK_UIO_DATETIME_DISPLAY_FORMAT']
         self.js_format = current_app.config['FLASK_UIO_DATETIME_JS_FORMAT']
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
         
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        
-        self.input = Element('input', attrs=self.attrs)
-        input_wrapper = Element('div', hide_id=False , css_class='ui calendar', inner_elements=[
-            Element('div', css_class='ui input', inner_elements=[
-                self.input
-            ])
-        ])
+        self.attrs.update({'type': 'text', 'autocomplete': 'off'})
+        self.input = Element('input', **self.attrs)
+        self.input_wrapper = Element('div', hide_id=False, _class='ui calendar')
+        self.input_wrapper.append(
+            Element('div', _class='ui input').append(self.input)
+        )
         
         # validate
         self.validate()
         
         # ui
-        wrapper = Field(label, input_wrapper, required=self.required, disabled=self.disabled, error=self.error.status)
+        wrapper = Field(label, self.input_wrapper, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.status:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', self.error.message, _class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
                           
-        self.inject_script = f'load_datetime_field("{input_wrapper.id}", "{self.js_format}");'
+        self.inject_script = f'load_datetime_field("{self.input_wrapper.id}", "{self.js_format}");'
             
     @property
     def data(self):
@@ -129,9 +178,20 @@ class DateTimeField(FieldElement, ReqInjectScriptMixin):
             raise ValueError(f'{self.name} must be a date/datetime.')
         # reset ui
         fm_date = datetime.strftime(value, self.py_format) if value else self.form_data
-        self.input.attrs.append(('value', fm_date))
+        self.input.attrs.update({'value': fm_date})
+        self._data = value
 
 class DropDownField(FieldElement, ReqInjectScriptMixin):
+    """Dropdown field widget
+
+    Args:
+    
+        name (string): input's name
+        choices (:obj:`list` of :obj:`tuple`, optional): key-value tuple list. Defaults to None.
+        required (bool, optional): set required attribute. Defaults to False.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+    """
     inject_script = ValidProp(str)
     choices = ValidSequenceProp(tuple)
     
@@ -146,23 +206,24 @@ class DropDownField(FieldElement, ReqInjectScriptMixin):
         
         super().__init__('', name=name, disabled=disabled, readonly=readonly, required=required)
         
-        self.attrs = self.attrs + [('type', 'text')]
+        self.attrs.update({'type': 'text', 'class':'ui search clearable selection dropdown'})
+        
         self.choices = [('Select One', '')] + choices
         options = []
         if self.choices:
-            # validate if choices are a list of tuple
             for n, v in self.choices:
-                options.append(Element('option', attrs=[('value',f"{v}")], inner_text=n))
+                options.append(Element('option', inner_text=n, _value=f"{v}"))
         
         # create layout
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('select', hide_id=False , css_class='ui search clearable selection dropdown', attrs=self.attrs, inner_elements=options)
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
+        self.input = Element('select', hide_id=False, **self.attrs)
+        self.input.append(*tuple(options))
         
         self.validate()
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.message:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', inner_text=self.error.message, _class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
         self.inject_script = f'load_dropdown_field("{self.input.id}");'
            
     @property
@@ -173,22 +234,79 @@ class DropDownField(FieldElement, ReqInjectScriptMixin):
     def data(self, value):
         # reset ui
         value = value if value else self.form_data
+        self._data = value
         options = []
         if self.choices:
-            # validate if choices are a list of tuple
             for n, v in self.choices:
                 if value == v:
-                    options.append(Element('option', attrs=[('value', f"{v}"), ('selected', 'selected')], inner_text=n))
+                    options.append(Element('option', inner_text=n, _value=v, _selected='selected'))
                 else:
-                    options.append(Element('option', attrs=[('value',f"{v}")], inner_text=n))
+                    options.append(Element('option', inner_text=n, _value=v))
         self.input._inner_elements = options
 
 class QueryDropDownField(FieldElement, ReqInjectScriptMixin):
+    """Query dropdown field widget
+
+    Args:
+    
+        name (string): field's name.
+        required (bool, optional): set required attribute. Defaults to False.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+        dbname (string, optional): database's name (required setup app config). Defaults to None.
+        field_id (string, optional): key field's name. Defaults to None.
+        field_name (string, optional): value field's name. Defaults to None.
+        from_table (string, optional): table's name. Defaults to None.
+        where (string, optional): sql query for where. Defaults to None.
+        order_by (string, optional): sql query for order by. Defaults to None.
+        additional_where (string, optional): sql query for where additionally. Defaults to None.
+        fk_field_id (string, optional): field's name for children dropdown query. Defaults to None.
+        parents (list[QueryDropDownField], optional): for dependent dropdown. Defaults to None.
+    
+    Note: 
+    
+        - Support only flask_sqlalchemy
+    
+    Setup::
+    
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+        app.config['SQLALCHEMY_DATABASE_URI_DICT'] = {
+            'test': 'sqlite:///test.db',
+        }
+        app.config['FLASK_UIO_FERNET_SECRET_KEY'] = 'your_fernet_secret_key'
+        # >>> from flask_uio import Token
+        # >>> Token.key()
+        
+    Example::
+
+        category = uio.QueryDropDownField(
+            'category',
+            True,
+            dbname='test',
+            field_id='id',
+            field_name='name',
+            from_table='category',
+            order_by='name desc',
+        )
+        post = uio.QueryDropDownField(
+            'post',
+            True,
+            dbname='test',
+            field_id='id',
+            field_name='title',
+            from_table='post',
+            where=f'category_id = {category.data if category.data else 0}',
+            parents=[category]
+        )
+        
+    """
+    
     dbname = ValidProp(str)
     field_id = ValidProp(str)
     field_name = ValidProp(str)
     from_table = ValidProp(str)
     where = ValidProp(str)
+    order_by = ValidProp(str)
     additional_where = ValidProp(str)
     inject_script = ValidProp(str)
     
@@ -205,21 +323,23 @@ class QueryDropDownField(FieldElement, ReqInjectScriptMixin):
             field_name=None, 
             from_table=None, 
             where=None, 
+            order_by=None,
             additional_where=None, 
             fk_field_id=None, 
             parents=None
         ):
         
+        
         super().__init__('', name=name, disabled=disabled, readonly=readonly, required=required)
         
-        self.attrs = self.attrs + [('type', 'text')]
+        self.attrs.update({'type': 'text'})
         self.choices = []
-        
         self.dbname = dbname
         self.field_id = field_id
         self.field_name = field_name
         self.from_table = from_table
         self.where = where
+        self.order_by = order_by
         self.additional_where = additional_where
         self.dependents = []
             
@@ -229,19 +349,19 @@ class QueryDropDownField(FieldElement, ReqInjectScriptMixin):
         
         options = []
         if self.choices:
-            # validate if choices are a list of tuple
             for n, v in self.choices:
-                options.append(Element('option', attrs=[('value',f"{v}")], inner_text=n))
+                options.append(Element('option', n, _value=v))
         
         # create layout
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('select', hide_id=False , css_class='ui search clearable selection dropdown', attrs=self.attrs, inner_elements=options)
+        label = Element('label', self.name.title(), _for=self.name)
+        self.input = Element('select', hide_id=False, _class='ui search clearable selection dropdown', **self.attrs)
+        self.input.append(*tuple(options))
         
         self.validate()
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.message:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div',self.error.message ,_class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
     
         self._ref_id = self.input.id
         
@@ -256,12 +376,13 @@ class QueryDropDownField(FieldElement, ReqInjectScriptMixin):
     def _init_data_source(self):
         additional_where = self.additional_where or ''
         where = f'where {self.where} {additional_where}' if self.where else ''
+        order_by = f"order by {self.order_by}" if self.order_by else f"order by {self.field_name} asc"
         
         sql = (
             f"select {self.field_id} as id, {self.field_name} as name "
             f"from {self.from_table} "
             f"{where} "
-            f"order by {self.field_name} asc;"
+            f"{order_by}"
         )
         
         if self.dbname:
@@ -322,25 +443,38 @@ class QueryDropDownField(FieldElement, ReqInjectScriptMixin):
     def data(self, value):
         # reset ui
         value = value if value else self.form_data
+        self._data = value
         options = []
         if self.choices:
-            # validate if choices are a list of tuple
             for n, v in self.choices:
                 if value == v:
-                    options.append(Element('option', attrs=[('value', f"{v}"), ('selected', 'selected')], inner_text=n))
+                    options.append(Element('option', n, _value=v, _selected='selected'))
                 else:
-                    options.append(Element('option', attrs=[('value',f"{v}")], inner_text=n))
+                    options.append(Element('option', n, _value=v))
         self.input._inner_elements = options
         
 class TextField(FieldElement):
+    """Text field widget
+
+    Args:
+    
+        name (string): input's name.
+        required (bool, optional): set required attribute. Defaults to False.
+        disabled (bool, optional): set disabled attribute. Defaults to False.
+        readonly (bool, optional): set readonly attribute. Defaults to False.
+        placeholder (string, optional): set placeholder. Defaults to None.
+        input_type (str, optional): input's type "text", "password",...etc. Defaults to 'text'.
+        validators (list[Validator], optional): add validators (auto add RequiredValidator if required). Defaults to None.
+        
+    """
     input_type = ValidProp(str)
     
     def __init__(self, name, required=False, disabled=False, readonly=False, placeholder=None, input_type='text', validators=None):
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required, validators=validators)
         self.input_type = input_type
-        self.attrs = self.attrs + [('type', input_type)]
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('input', attrs=self.attrs)
+        self.attrs.update({'type': input_type})
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
+        self.input = Element('input', **self.attrs)
         
         # validate on submit
         self.validate()
@@ -348,8 +482,8 @@ class TextField(FieldElement):
         # ui
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.message:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', self.error.message, _class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
         
     @property
     def data(self):
@@ -359,26 +493,38 @@ class TextField(FieldElement):
     def data(self, value):
         if value is not None and not isinstance(value, str):
             raise ValueError(f'{self.name} must be a string!')
-        self.attrs.append(('value', value))
-        self.input.attrs.append(('value', value))
+        self.attrs.update({'value': value})
+        self.input.attrs.update({'value': value})
+        self._data = value
         
 class TextAreaField(FieldElement):
     rows = ValidProp(int)
     
     def __init__(self, name, rows=None, required=False, disabled=False, readonly=False, placeholder=None):
+        """Textarea field widget
+        
+        Args:
+        
+            name (string): textarea's name.
+            rows (int, optional): textarea's rows. Defaults to None.
+            required (bool, optional): set required attribute. Defaults to False.
+            disabled (bool, optional): set disabled attribute. Defaults to False.
+            readonly (bool, optional): set readonly attribute. Defaults to False.
+            placeholder (string, optional): set placeholder. Defaults to None.
+        """
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required)
         self.rows = rows
         if self.rows:
-            self.attrs = self.attrs + [('rows', self.rows)]
+            self.attrs.update({'rows': self.rows})
         
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('textarea', attrs=self.attrs)
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
+        self.input = Element('textarea', **self.attrs)
         # validate
         self.validate()
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.status:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', self.error.message, _class='ui basic red pointing prompt label transition visible'))
+        self.append(wrapper)
         
     @property
     def data(self):
@@ -389,24 +535,36 @@ class TextAreaField(FieldElement):
         if value is not None and not isinstance(value, str):
             raise ValueError(f'{self.name} must be a string!')
         self.input.inner_text = value
+        self._data = value
         
 class TextAreaSummernoteField(FieldElement, ReqInjectScriptMixin):
     rows = ValidProp(int)
     
     def __init__(self, name, rows=None, required=False, disabled=False, readonly=False, placeholder=None):
+        """Textarea summernote field (rich text editor)
+
+        Args:
+        
+            name (string): textarea's name.
+            rows (int, optional): textarea's rows. Defaults to None.
+            required (bool, optional): set required attribute. Defaults to False.
+            disabled (bool, optional): set disabled attribute. Defaults to False.
+            readonly (bool, optional): set readonly attribute. Defaults to False.
+            placeholder (string, optional): set placeholder. Defaults to None.
+        """
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required)
         self.rows = rows
         if self.rows:
-            self.attrs = self.attrs + [('rows', self.rows)]
+            self.attrs.update({'rows': self.rows})
         
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('textarea', attrs=self.attrs, hide_id=False)
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
+        self.input = Element('textarea', **self.attrs, hide_id=False)
         # validate
         self.validate()
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.status:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', _class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
+        self.append(wrapper)
         self.inject_script = f'load_summernote_editor("{self.input.id}", "{self.placeholder}");'
         
     @property
@@ -418,13 +576,24 @@ class TextAreaSummernoteField(FieldElement, ReqInjectScriptMixin):
         if value is not None and not isinstance(value, str):
             raise ValueError(f'{self.name} must be a string!')
         self.input.inner_text = value
+        self._data = value
         
 class UploadField(FieldElement):
     def __init__(self, name, required=False, disabled=False, readonly=False, placeholder=None, validators=None):
+        """Upload field widget
+
+        Args:
+            name (string): input's name
+            required (bool, optional): set required attribute. Defaults to False.
+            disabled (bool, optional): set disabled attribute. Defaults to False.
+            readonly (bool, optional): set readonly attribute. Defaults to False.
+            placeholder (string, optional): set placeholder. Defaults to None.
+            validators (list[Validator], optional): add validators (auto add RequiredValidator if required). Defaults to None.
+        """
         super().__init__('', name=name, placeholder=placeholder, disabled=disabled, readonly=readonly, required=required, validators=validators)
-        self.attrs = self.attrs + [('type', 'file')]
-        label = Element('label', inner_text=self.name.title(), attrs=[('for', self.name)])
-        self.input = Element('input', attrs=self.attrs)
+        self.attrs.update({'type': 'file'})
+        label = Element('label', inner_text=self.name.title(), _for=self.name)
+        self.input = Element('input', **self.attrs)
         
         # validate on submit
         self.validators.append(UploadValidator())
@@ -433,8 +602,8 @@ class UploadField(FieldElement):
         # ui
         wrapper = Field(label, self.input, required=self.required, disabled=self.disabled, error=self.error.status)
         if self.error.message:
-            wrapper.append_inner(Element('div', css_class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
-        self.append_inner(wrapper)
+            wrapper.append(Element('div', _class='ui basic red pointing prompt label transition visible', inner_text=self.error.message))
+        self.append(wrapper)
     
     @property
     def form_data(self):

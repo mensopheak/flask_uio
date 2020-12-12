@@ -31,6 +31,17 @@ class CoreElement:
             
         instance.__dict__[prop_name].append(element)
         
+    def _get_string_attrs(self, **args):
+        attrs = ''
+        for k, v in args.items():
+            k = k.replace('_', '').lower()
+            if k != 'class':
+                if k and v is not None:
+                    attrs += f' {k}="{v}"'
+                elif k and v is None:
+                    attrs += f' {k}'
+        return attrs
+        
     def __eq__(self, other):
         return self.id == other.id
     

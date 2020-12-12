@@ -2,29 +2,33 @@ from .element import Element
 from .prop import ValidProp
 
 class Icon(Element):
-    """Icon widget (default: Fomantic-UI)
+    """Icon widget
     
     Args:
         
-        * css_class (str): set icon css class.
+        css_class (str): set icon css class.
     """
     def __init__(self, css_class):
-        super().__init__('i', css_class)
+        super().__init__('i', _class=css_class)
         
 class LinkIcon(Element):
-    """LinkIcon widget (default: Fomantic-UI)
+    """LinkIcon widget
     
     Args:
         
-        * css_class (str): set icon css class.
-        * url (str): url.
-        * target (str): '_self', '_blank', '_parent', '_top'
+        css_class (str): set icon css class.
+        url (str): url.
+        target (str, optional): '_self', '_blank', '_parent', '_top'
+        
+    More Info:
+    
+        - See https://fomantic-ui.com/elements/icon.html
     """
     
     url = ValidProp(str)
     target = ValidProp(str)
     def __init__(self, css_class, url, target=None):
-        super().__init__('a', css_class)
+        super().__init__('a', _class=css_class)
         self.url = url
         self.target = target
         self.attrs = [('href', self.url)]

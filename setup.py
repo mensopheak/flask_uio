@@ -8,7 +8,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name = 'flask_uio',
     packages = find_packages(),
-    version = '0.1.2',
+    version = '0.1.5',
     license='MIT',
     description = 'Build user interface by implementing object',
     author = 'Men Sopheak',

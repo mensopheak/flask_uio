@@ -3,45 +3,44 @@ from .prop import ValidProp
 from .icon import Icon
 
 class Menu(Element):
-    opt_css_class = ValidProp(str)
-    css_class = ValidProp(str)
     
-    def __init__(self, *elements, opt_css_class=None, css_class=None, hide_id=True):
-        super().__init__('div', hide_id=hide_id)
-        self.opt_css_class = ' ' + opt_css_class if opt_css_class else ''
-        self.css_class = css_class or f'ui{self.opt_css_class} menu'
-        self.append_inner(*elements)
+    def __init__(self, *elements, hide_id=True, **attrs):
+        super().__init__('div', hide_id=hide_id, **attrs)
+        self.css_class = self.attrs.get('_class') or f'ui menu'
+        self.append(*elements)
         
 class RightMenu(Menu):
     def __init__(self, *elements):
-        super().__init__(*elements, css_class='right menu')
+        super().__init__(*elements, _class='right menu')
         
 class MenuItem(Element):
     url = ValidProp(str)
     icon = ValidProp(Icon)
     
-    def __init__(self, name, url=None, icon=None, css_class=None, hide_id=True):
-        super().__init__('div', hide_id=hide_id)
+    def __init__(self, name, url=None, icon=None, hide_id=True, **attrs):
+        super().__init__('div', inner_text=name, hide_id=hide_id, **attrs)
         self.url = url
         if self.url is not None:
             self.tag_name = 'a'
         self.icon = icon
         if self.icon:
-            self.append_inner(icon)
-        self.css_class = css_class or 'item'
+            self.append(icon)
+        self.css_class = self.attrs.get('_class') or 'item'
         if self.url is not None and len(str(self.url).strip()) > 0:
-            self.attrs = [('href', self.url)]
-        self.inner_text = name
+            self.attrs.update({'href': self.url})
         
 class MenuHeaderItem(MenuItem):
-    def __init__(self, title, url=None, icon=None):
-        super().__init__(title, url, icon, 'header item')
+    def __init__(self, title, url=None, icon=None, **attrs):
+        super().__init__(title, url, icon, **attrs)
+        self.css_class = self.attrs.get('_class') or 'header item'
         
 class MenuActiveItem(MenuItem):
-    def __init__(self, title, url=None, icon=None):
-        super().__init__(title, url, icon, 'active item')
+    def __init__(self, title, url=None, icon=None, **attrs):
+        super().__init__(title, url, icon, **attrs)
+        self.css_class = self.attrs.get('_class') or 'active item'
         
 class MenuDisableItem(MenuItem):
-    def __init__(self, title, url=None, icon=None):
-        super().__init__(title, url, icon, 'disabled item')
+    def __init__(self, title, url=None, icon=None, **attrs):
+        super().__init__(title, url, icon, **attrs)
+        self.css_class = self.attrs.get('_class') or 'disabled item'
         

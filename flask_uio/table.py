@@ -7,11 +7,10 @@ from .element import CoreElement
 from .mixin import ReqInjectScriptMixin
 from .prop import IntProp, ValidProp, ValidSequenceProp
 from .route import Route
-from .a import A
 from .element import Element
 from .modal import ConfirmModal
 from .form import Form
-from .button import Button
+from .button import Button, LinkButton
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 class TableColItem:
@@ -95,6 +94,7 @@ class TableStaticLinkItem(TableColItem):
         self.fp_col_name = fp_col_name
     
 class Table(CoreElement, ReqInjectScriptMixin):
+    
     per_page = IntProp(min_value=1)
     pages = IntProp(min_value=0)
     total = IntProp(min_value=0)
@@ -233,6 +233,7 @@ class Table(CoreElement, ReqInjectScriptMixin):
     
     @items.setter
     def items(self, data):
+        """Table items"""
         if not isinstance(data, list):
             raise ValueError('data must be a list of dict.')
         
@@ -424,7 +425,7 @@ class Table(CoreElement, ReqInjectScriptMixin):
             fp = item.get(colitem.fp_col_name)
             if fp:
                 url = url_for('static', filename=fp.replace('static/', ''))
-                output = A(text=data, url=url).get_html()
+                output = Element('a', data, _href=url, _target='_blank').get_html()
             else:
                 output = str(data)
         return output
@@ -433,7 +434,8 @@ class Table(CoreElement, ReqInjectScriptMixin):
         tb_rows = ''
         for item in self.items:
             tb_row = ''
-                    
+            
+            # define key for detail/info route argument
             detail_kwarg = {}
             for col in self.colitems:
                 data = item.get(col.name)
@@ -447,16 +449,16 @@ class Table(CoreElement, ReqInjectScriptMixin):
                     data = self._format_col_data(col, data, item)    
                     tb_row += f'<td {detail_url}>{data if data is not None else "N/A"}</td>'
                 
-            # actions
+            # define route for actions (edit/delete)
             tb_action = ''
             if (self.edit_route or self.delete_route) and bool(detail_kwarg):
-                actions = Element('div', css_class="ui small basic icon buttons")
+                actions = Element('div', _class="ui small basic icon buttons")
                 if self.edit_route:
-                    actions.append_inner(
+                    actions.append(
                         Element('a', 
-                            css_class='ui button', 
                             inner_text='<i class="pen icon"></i>', 
-                            attrs=[('href', self.edit_route.get_url(**detail_kwarg))]
+                            _class='ui button', 
+                            _href= self.edit_route.get_url(**detail_kwarg)
                         )
                     )
                 if self.delete_route:
@@ -465,7 +467,12 @@ class Table(CoreElement, ReqInjectScriptMixin):
                         if not col.is_hidden or col.name.lower() not in self.excludes:
                             delete_info += f'<li>{col.friendly_name}: {self._format_col_data(col, item.get(col.name), item)}</li>'
                     delete_info = f'<ul>{delete_info}</ul>'
-                    delete_button = Element('div', css_class='ui button', inner_text='<i class="trash alternate red icon"></i>', hide_id=False)
+                    delete_button = Element(
+                        'div', 
+                        inner_text='<i class="trash alternate red icon"></i>', 
+                        hide_id=False,
+                        _class='ui button', 
+                    )
                     confirm = ConfirmModal(
                         title=self.title,
                         submit_url=self.delete_route.get_url(**detail_kwarg),
@@ -475,8 +482,8 @@ class Table(CoreElement, ReqInjectScriptMixin):
                         yes='Yes, Delete',
                         calling_id=delete_button.id,
                     )
-                    actions.append_inner(delete_button)
-                    actions.append_inner(confirm)
+                    actions.append(delete_button)
+                    actions.append(confirm)
                     self.inject_script += f'load_modal("{delete_button.id}", "{confirm.id}");'
                 tb_action += '<td>' + actions.get_html() + '</td>'
             
@@ -492,58 +499,98 @@ class Table(CoreElement, ReqInjectScriptMixin):
 
     def _get_footer_html(self):
         if self.reload_route and len(self.items) > 0:
-            pagination = Element('div', css_class='ui pagination stackable fluid secondary menu', attrs=[('style', 'padding-top:5px; padding-bottom:5px;')])
+            pagination = Element('div', 
+                _class='ui pagination stackable fluid secondary menu', 
+                _style='padding-top:5px; padding-bottom:5px;'
+            )
             
             current_args_dict = self.current_args_dicts.copy()
             
             if self.total or self.pages:
-                text = f'Total: {self.total}'
-                text += f', Pages: {self.pages}'
-                pagination.append_inner(Element('div', css_class='item', inner_text=text))
+                text = f'Pages: {self.pages}'
+                text += f', Record: {self.total}'
+                pagination.append(Element('div', _class='item', inner_text=text))
+            
+            if self.total:
+                text = f'Record: {self.total}'
+                pagination.append(Element('div', _class='item', inner_text=text))
             
             if self.page > 1:
                 current_args_dict.update({'_page': 1})
                 url = self.reload_route.get_url(**current_args_dict)
-                pagination.append_inner(Element('a', css_class='item', inner_text='First', attrs=[('href', url)]))
+                pagination.append(Element('a', _class='item', inner_text='First', _href=url))
                 
             if self.prev_num and self.page and self.page > 2:
                 current_args_dict.update({'_page': self.prev_num})
                 url = self.reload_route.get_url(**current_args_dict)
-                pagination.append_inner(Element('a', css_class='icon item', inner_text='<i class="angle left icon"></i>', attrs=[('href', url)]))
+                pagination.append(Element('a', _class='icon item', inner_text='<i class="angle left icon"></i>', _href=url))
                 
             if self.page:
-                pagination.append_inner(Element('div', css_class='active item', inner_text=f'{self.page}'))
+                pagination.append(Element('div', _class='active item', inner_text=f'{self.page}'))
                 
             if self.next_num:
                 if self.pages is None or (self.pages and self.next_num < self.pages): 
                     current_args_dict.update({'_page': self.next_num})
                     url = self.reload_route.get_url(**current_args_dict)
-                    pagination.append_inner(Element('a', css_class='icon item', inner_text='<i class="angle right icon"></i>', attrs=[('href', url)]))
+                    pagination.append(Element('a', _class='icon item', inner_text='<i class="angle right icon"></i>', _href=url))
                 
             if self.pages:
                 current_args_dict.update({'_page': self.pages})
                 url = self.reload_route.get_url(**current_args_dict)
-                pagination.append_inner(Element('a', css_class='item', inner_text='Last', attrs=[('href', url)]))
+                pagination.append(Element('a', _class='item', inner_text='Last', _href=url))
             
             current_args_dict = self.current_args_dicts.copy()
             if current_args_dict.get('_page'):
                 del current_args_dict['_page']
             url = self.reload_route.get_url(**current_args_dict)
-            form = Element('form', css_class='item', attrs=[('id', self._ref_form_paginate_id), ('method', 'POST'), ('action', url)],)
-            form.append_inner(
-                Element('div', 
-                    css_class='ui action input', 
-                    inner_elements=[
-                        Form.create_csrf_field(),
-                        Element('', inner_text=f'<input name="{self._ref_form_paginate_text_id}" type="text" placeholder="Page" value="{self.page}" />'),
-                        Element('', inner_text=f'<button form="{self._ref_form_paginate_id}" class="ui button" type="submit">Go</button>')
-                    ]
-                )
+            form = Element(
+                'form', 
+                _class='item', 
+                _id=self._ref_form_paginate_id,
+                _method='POST',
+                _action=url,
             )
-            pagination.append_inner(form)
+            form_action = Element('div', _class='ui action input')
+            form_action.append(
+                Form.create_csrf_field(),
+                Element('', inner_text=f'<input name="{self._ref_form_paginate_text_id}" type="text" placeholder="Page" value="{self.page}" />'),
+                Element('', inner_text=f'<button form="{self._ref_form_paginate_id}" class="ui button" type="submit">Go</button>')
+            )
+            form.append(form_action)
+            pagination.append(form)
             return pagination.get_html()
         else:
-            return Element('div', attrs=[('style', 'padding: 0.8rem;')], inner_text='0 Page').get_html()
+            current_args_dict = self.current_args_dicts.copy()
+            pagination = Element('div', 
+                _class='ui pagination stackable fluid secondary menu', 
+                _style='padding-top:5px; padding-bottom:5px;',
+            )
+            if self.total or self.pages:
+                text = f'Record: {self.total}'
+                text += f', Pages: {self.pages}'
+                pagination.append(Element('div', _class='item', inner_text=text))
+            
+            current_args_dict.update({'_page': 1})
+            url = self.reload_route.get_url(**current_args_dict)
+            pagination.append(Element('a', _class='item', inner_text='First', _href=url))
+            
+            url = self.reload_route.get_url(**current_args_dict)
+            form = Element(
+                'form', 
+                _class='item', 
+                _id=self._ref_form_paginate_id,
+                _method='POST',
+                _action=url,
+            )
+            form_action = Element('div', _class='ui action input')
+            form_action.append(
+                Form.create_csrf_field(),
+                Element('', inner_text=f'<input name="{self._ref_form_paginate_text_id}" type="text" placeholder="Page" value="{self.page}" />'),
+                Element('', inner_text=f'<button form="{self._ref_form_paginate_id}" class="ui button" type="submit">Go</button>')
+            )
+            form.append(form_action)
+            pagination.append(form)
+            return pagination.get_html()
 
     def _get_search_html(self):
         current_args_dict = self.current_args_dicts.copy()
@@ -553,8 +600,8 @@ class Table(CoreElement, ReqInjectScriptMixin):
             del current_args_dict['_search_option']
         url = self.reload_route.get_url(**current_args_dict)
         
-        textbox = Element('input', attrs=[('type', 'text'), ('placeholder', 'Search...'), ('name', self._ref_form_search_text_id), ('value', self.search_text)])
-        select = Element('select', css_class='ui compact selection dropdown', hide_id=False, attrs=[('name', self._ref_form_search_option_id)])
+        textbox = Element('input', _type='text', _placeholder='Search...', _name=self._ref_form_search_text_id, _value=self.search_text)
+        select = Element('select', _class='ui compact selection dropdown', hide_id=False, _name=self._ref_form_search_option_id)
         options = f'<option value="">Select Option</option>'
         for col in self.colitems:
             if col.allow_search and not col.is_hidden:
@@ -565,10 +612,10 @@ class Table(CoreElement, ReqInjectScriptMixin):
                 else:
                     options += f'<option value="{col_value}">{col_text}</option>'
         select.inner_text = options
-        btn = Element('button', css_class='ui button', attrs=[('type', 'submit'), ('form', self._ref_form_search_id)], inner_text='Search')
-        form = Element('form', css_class='ui action input', attrs=[('method', 'POST'), ('id', self._ref_form_search_id), ('action', url)])
+        btn = Element('button', _class='ui button', _type='submit', _form=self._ref_form_search_id, inner_text='Search')
+        form = Element('form', _class='ui action input', _method='POST', _id=self._ref_form_search_id, _action=url)
         csrf_field = Form.create_csrf_field()
-        form.append_inner(csrf_field ,textbox, select, btn)
+        form.append(csrf_field ,textbox, select, btn)
         self.inject_script += f'load_dropdown_field("{select.id}");'
         return form.get_html()
 
@@ -586,7 +633,7 @@ class Table(CoreElement, ReqInjectScriptMixin):
     def get_html(self):
         items = []
         if self.new_route:
-            btn = Button('New Record', url=self.new_route.get_url())
+            btn = LinkButton('New Record', url=self.new_route.get_url(), _class='ui primary button')
             items.append(f'<div class="item">{btn.get_html()}</div>')
         
         if self.allow_search:
@@ -595,9 +642,9 @@ class Table(CoreElement, ReqInjectScriptMixin):
         title_html, table_html, paginate_html, action_html = '', '', '', ''
         
         if len(items) > 0:
-            menu = Element('div', css_class='ui stackable secondary menu', attrs=[('style', 'padding-top:5px; padding-bottom:5px;')])
+            menu = Element('div', _class='ui stackable secondary menu', _style='padding-top:5px; padding-bottom:5px;')
             for item in items:
-                menu.append_inner(Element('', inner_text=item))
+                menu.append(Element('', inner_text=item))
             action_html = f'<div class="ui fitted attached segment">{menu.get_html()}</div>'
 
         footer_html = self._get_footer_html()
@@ -608,7 +655,7 @@ class Table(CoreElement, ReqInjectScriptMixin):
             title_html = f'<h4 class="ui top attached primary header segment">{self.title}</h4>'
             table_html = f'<div class="ui attached segment" style="overflow-x: auto;">{self._get_table_html()}</div>'
         else:
-            title_html = Element('h4', css_class='ui dividing primary header', inner_text=self.title).get_html()
+            title_html = Element('h4', _class='ui dividing primary header', inner_text=self.title).get_html()
             table_html = f'<div style="overflow-x: auto;">{self._get_table_html()}</div>'
         
         return title_html + action_html + table_html + paginate_html
