@@ -7,5 +7,6 @@ py.test -v -x : if failure, exit
 py.test -v -x --tb=no
 py.test -v --maxfail=2
 py.test -v -s : allow print 
+pytest -v --cov
 
 pytest tests/test_core.py::TestCoreElement::test_tag_name_is_lower_case

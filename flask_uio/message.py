@@ -36,18 +36,18 @@ class Message(Element):
         self.spacing = spacing
         self.css_class = 'hideable' if hideable else ''
         
-        msg_box = Element('div', css_class=f'ui{self.opt_css_class} message')
+        msg_box = Element('div', _class=f'ui{self.opt_css_class} message')
         if self.icon:
-            msg_box.append_inner(self.icon)
-        msg_content = Element('div', css_class='content')
-        msg_content.append_inner(Element('div', css_class='header', inner_text=self.message))
+            msg_box.append(self.icon)
+        msg_content = Element('div', _class='content')
+        msg_content.append(Element('div', _class='header', inner_text=self.message))
         if self.desc:
-            msg_content.append_inner(Element('p', inner_text=self.desc))
-        msg_box.append_inner(msg_content)
+            msg_content.append(Element('p', inner_text=self.desc))
+        msg_box.append(msg_content)
         
         if self.spacing:
-            segment = Segment(msg_box, opt_css_class='horizontally fitted basic')
-            self.append_inner(segment)
+            segment = Segment(msg_box, _class='ui horizontally fitted basic segment')
+            self.append(segment)
         else:
-            self.append_inner(msg_box)
+            self.append(msg_box)
             

@@ -65,11 +65,11 @@ def load_message():
 @app.route('/breadcrumb')
 def load_breadcrumb():
     b1 = uio.Breadcrumb()
-    b1.append_inner(
+    b1.append(
         uio.BreadcrumbSection('Home', 'home', True)
     )
     b2 = uio.Breadcrumb()
-    b2.append_inner(
+    b2.append(
         uio.BreadcrumbSection('Home', 'home', False),
         uio.BreadcrumbDividerIcon(),
         uio.BreadcrumbSection('List', 'list', False),
@@ -77,7 +77,7 @@ def load_breadcrumb():
         uio.BreadcrumbSection('Info',is_active=True),
     )
     b3 = uio.Breadcrumb(is_dividing=False)
-    b3.append_inner(
+    b3.append(
         uio.BreadcrumbSection('Home', 'home', False),
         uio.BreadcrumbDividerIcon(),
         uio.BreadcrumbSection('List', 'list', False),
@@ -103,7 +103,7 @@ def load_image():
 @app.route('/sidebar')
 def load_sidebar():
     sidebar = uio.SideBar()
-    sidebar.sidebar_menu.append_inner(
+    sidebar.sidebar_menu.append(
         uio.Image(url_for('static', filename='vlogo.png'), opt_css_class='small centered'),
         uio.MenuHeaderItem('PYSONICE'),
         uio.MenuItem('Admin', 'admin'),
@@ -111,12 +111,12 @@ def load_sidebar():
         uio.MenuItem('CUS', 'cus'),
     )
     system_dd = uio.Dropdown('System', css_class='ui dropdown item')
-    system_dd.append_inner(
+    system_dd.append(
         uio.DropdownMenu(
             uio.DropdownMenuItem('Module', url='module', icon=uio.Icon('tools icon'))
         )
     )
-    sidebar.nav_menu.append_inner(
+    sidebar.nav_menu.append(
         uio.MenuHeaderItem('FlaskUIO'),
         system_dd,
         uio.MenuItem('Resource'),
@@ -170,7 +170,7 @@ def load_menu():
 def load_dropdown():
     dd = uio.Dropdown('File')
     ddi1 = uio.DropdownMenuItem('Publish To Web', icon=uio.Icon('dropdown icon'))
-    ddi1.append_inner(
+    ddi1.append(
         uio.DropdownMenu(
             uio.DropdownMenuItem('Google Docs', 'http://google.com'),
             uio.DropdownMenuItem('Google Drive'),
@@ -184,7 +184,7 @@ def load_dropdown():
         uio.Divider(),
         ddi1,
     )
-    dd.append_inner(ddm)
+    dd.append(ddm)
     segment = uio.Segment(dd, opt_css_class='basic')
     doc = uio.Document('Fomantic Ui - Dropdown')
     doc.body.append(segment)
@@ -246,32 +246,32 @@ def load_card():
 @app.route('/grid')
 def load_grid():
     grid1 = uio.Grid()
-    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
-    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
-    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
-    grid1.append_inner(uio.GridColumn(nb_wide=4).append_inner(get_card('4 wide column')))
+    grid1.append(uio.GridColumn(nb_wide=4).append(get_card('4 wide column')))
+    grid1.append(uio.GridColumn(nb_wide=4).append(get_card('4 wide column')))
+    grid1.append(uio.GridColumn(nb_wide=4).append(get_card('4 wide column')))
+    grid1.append(uio.GridColumn(nb_wide=4).append(get_card('4 wide column')))
     
     grid2 = uio.Grid()
-    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
-    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
-    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
-    grid2.append_inner(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
-    grid2.append_inner(uio.GridColumn(get_card('2 wide column'), nb_wide=2))
-    grid2.append_inner(uio.GridColumn(get_card('8 wide column'), nb_wide=8))
-    grid2.append_inner(uio.GridColumn(get_card('6 wide column'), nb_wide=6))
+    grid2.append(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append(uio.GridColumn(get_card('4 wide column'), nb_wide=4))
+    grid2.append(uio.GridColumn(get_card('2 wide column'), nb_wide=2))
+    grid2.append(uio.GridColumn(get_card('8 wide column'), nb_wide=8))
+    grid2.append(uio.GridColumn(get_card('6 wide column'), nb_wide=6))
     
     grid3 = uio.Grid(nb_col=4)
-    grid3.append_inner(
+    grid3.append(
         uio.GridRow(
             uio.GridColumn(get_card('column')),
             uio.GridColumn(get_card('column')),
             uio.GridColumn(get_card('column')),
         )
     )
-    grid3.append_inner(uio.GridColumn(get_card('column')))
-    grid3.append_inner(uio.GridColumn(get_card('column')))
-    grid3.append_inner(uio.GridColumn(get_card('column')))
-    grid3.append_inner(uio.GridColumn(get_card('column')))
+    grid3.append(uio.GridColumn(get_card('column')))
+    grid3.append(uio.GridColumn(get_card('column')))
+    grid3.append(uio.GridColumn(get_card('column')))
+    grid3.append(uio.GridColumn(get_card('column')))
     
     segment = uio.Segment(grid1, grid2, grid3, opt_css_class='basic')
     doc = uio.Document('Fomantic Ui - Grid')
@@ -284,7 +284,7 @@ def index():
     title = uio.Element('div', 'ui primary header', inner_text='Welcome To FlaskUIO')
     content = uio.Element('div', 'content', inner_text="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Why do we use it It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).")
     card = uio.Element('div', 'ui fluid card')
-    card.append_inner(content)
+    card.append(content)
     icon = uio.Icon(css_class='large home icon')
     link_icon = uio.LinkIcon('large google red icon', 'http://google.com', '_blank')
     segment = uio.Element('div', 'ui basic segment', inner_elements=[title, card, icon, link_icon])
@@ -386,7 +386,7 @@ def form():
     is_private = uio.CheckBoxField('is_private')
     submit = uio.Button('Submit', btn_type='button', color='blue')
     modal = uio.ConfirmModal('Confirmation Modal', 'Are you sure to proceed this form?', calling_id=submit.id, form_id=f.id, icon=uio.Icon('delete icon'))
-    f.append_inner(
+    f.append(
         username,
         password,
         color,

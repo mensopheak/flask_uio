@@ -24,6 +24,8 @@ class Element(CoreElement):
     hide_id = ValidProp(bool)
     self_closing_tag = ValidProp(bool)
     _inner_elements = ValidSequenceProp(CoreElement)
+    _prev_elements = ValidSequenceProp(CoreElement)
+    _next_elements = ValidSequenceProp(CoreElement)
     
     def __init__(self, tag_name, inner_text=None, hide_id=True, self_closing_tag=False, **attrs):
         
@@ -36,6 +38,8 @@ class Element(CoreElement):
         self.inner_text = inner_text
         self.self_closing_tag = self_closing_tag
         setattr(self, '_inner_elements', []) 
+        setattr(self, '_prev_elements', []) 
+        setattr(self, '_next_elements', []) 
     
     def get_html(self):
         """Generate html string
@@ -55,6 +59,18 @@ class Element(CoreElement):
             for obj in self._inner_elements:
                 inner_element_html += obj.get_html()
                 
+        # prev_elements
+        prev_element_html = ''
+        if self._prev_elements:
+            for obj in self._prev_elements:
+                prev_element_html += obj.get_html()
+                
+        # next_elements
+        next_element_html = ''
+        if self._next_elements:
+            for obj in self._next_elements:
+                next_element_html += obj.get_html()  
+                
         # css class
         css_class = ''
         if self.css_class:
@@ -71,7 +87,7 @@ class Element(CoreElement):
             else:
                 html = f'<{self.tag_name}{tag_id}{css_class}{attrs}>{inner_element_html}{inner_text}</{self.tag_name}>'
         
-        return html
+        return prev_element_html + html + next_element_html
         
     def append(self, *elements):
         """Append inner elements
@@ -85,6 +101,16 @@ class Element(CoreElement):
             self._append_element(self, '_inner_elements', element)
         return self
     
+    def append_prev(self, *elements):
+        for element in elements:
+            self._append_element(self, '_prev_elements', element)
+        return self
+        
+    def append_next(self, *elements):
+        for element in elements:
+            self._append_element(self, '_next_elements', element)   
+        return self     
+    
     def find_element(self, *types):
         """Find inner element by type
 
@@ -94,6 +120,25 @@ class Element(CoreElement):
         result = []
         if self._inner_elements:
             for obj in self._inner_elements:
+                if isinstance(obj, types):
+                    result += [obj]
+                else:
+                    if hasattr(obj, 'find_element'):
+                        finding = obj.find_element(types)
+                        if len(finding) > 0:
+                            result += finding
+                            
+        if self._prev_elements:
+            for obj in self._prev_elements:
+                if isinstance(obj, types):
+                    result += [obj]
+                else:
+                    if hasattr(obj, 'find_element'):
+                        finding = obj.find_element(types)
+                        if len(finding) > 0:
+                            result += finding
+        if self._next_elements:
+            for obj in self._next_elements:
                 if isinstance(obj, types):
                     result += [obj]
                 else:

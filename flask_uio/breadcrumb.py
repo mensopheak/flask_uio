@@ -35,7 +35,7 @@ class BreadcrumbSection(Element):
         self.url = url
         if self.url:
             self.tag_name = 'a'
-            self.attrs = [('href', self.url)]
+            self.attrs.update({'href': self.url})
         self.inner_text = title
         opt = ''
         self.is_active = is_active

@@ -6,9 +6,10 @@ class Form(Element):
     """Form widget
 
     Args:
-        method (str, optional): [description]. Defaults to 'POST'.
-        action (string, optional): [description]. Defaults to None.
-        has_file (bool, optional): [description]. Defaults to None.
+    
+        method (str, optional): form's method. Defaults to 'POST'.
+        action (string, optional): form's action. Defaults to None.
+        has_file (bool, optional): required for fileupload. Defaults to None.
     """
     method = ValidProp(str)
     action = ValidProp(str)

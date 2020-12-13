@@ -31,7 +31,7 @@ class LinkIcon(Element):
         super().__init__('a', _class=css_class)
         self.url = url
         self.target = target
-        self.attrs = [('href', self.url)]
+        self.attrs.update({'href': self.url})
         if self.target:
-            self.attrs.append(('target', self.target))
-        self.append_inner(Icon(css_class))
+            self.attrs.update({'target': self.target})
+        self.append(Icon(css_class))
